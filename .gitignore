@@ -1,4 +1,3 @@
 *.cfg
-*.sql
 resources/*
 venv_mirabel/*
