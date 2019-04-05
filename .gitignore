@@ -1,0 +1,3 @@
+*.cfg
+resources/*
+venv_mirabel/*
