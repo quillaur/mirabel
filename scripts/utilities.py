@@ -31,10 +31,23 @@ def mysql_connection(config):
 
     :return: connection
     """
-    mydb = mysql.connector.connect(
+    return mysql.connector.connect(
         host=config["DB"]["HOST"],
         user=config["DB"]["USER"],
-        passwd=config["DB"]["PASSWORD"]
+        passwd=config["DB"]["PASSWORD"],
+        db=config["DB"]["DATABASE"]
     )
 
-    return mydb
+
+def chunk(input_list: list, chunk_size: int):
+    """
+    Yields successive n-sized chunks from input list.
+
+    :param input_list: list you wish to chunk.
+    :type input_list: list
+    :param chunk_size: how many chunks you wish.
+    :type chunk_size: int
+    """
+    for i in range(0, len(input_list), chunk_size):
+        yield input_list[i:i + chunk_size]
+
