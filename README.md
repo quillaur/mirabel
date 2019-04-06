@@ -16,9 +16,9 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
 - Compare aggregated data to miRmap / MBStar and miRDB
 
 # How does it work
-1. Update public databases
-File URLs need to be specified in the config.
-Each file is being downloaded, reformated and inserted in MYSQL.
+1. Update public databases:
+    1. File URLs need to be specified in the config.
+    2. Each file is being downloaded, reformated and inserted in MYSQL.
 
 2. Aggregation: to be described...
 
