@@ -72,7 +72,17 @@ if __name__ == '__main__':
 
     # Download
     try:
-        utilities.download(url, file_name)
+        # Check that file was not already downloaded
+        download_tag = utilities.check_files_presence(files_list=[file_name])
+        short_file_name = file_name.split("/")[-1]
+        if download_tag:
+            # If so, do you wish to download it anyway?
+            if not click.confirm("{} already exists on your system. "
+                                 "Do you still wish to download it anyway?".format(short_file_name), default=False):
+                download_tag = False
+
+        if download_tag:
+            utilities.download(url, file_name)
 
     except Exception as e:
         logging.error("Download issue: {}".format(e))
@@ -99,5 +109,5 @@ if __name__ == '__main__':
 
     for sub_list in utilities.chunk(predictions_list, 1000):
         cursor.executemany(query, sub_list)
-    connection.commit()
+        connection.commit()
     connection.close()

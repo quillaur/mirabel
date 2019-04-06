@@ -65,15 +65,6 @@ def download(url: str, file_name: str):
     :param file_name: name of file to write downloaded data in.
     :return: None
     """
-    # Check that file was not already downloaded
-    download_tag = True
-    short_file_name = file_name.split("/")[-1]
-    if os.path.exists(file_name):
-        # If so, do you wish to download it anyway?
-        if not click.confirm("{} already exists on your system. "
-                             "Do you still wish to download it anyway?".format(short_file_name), default=False):
-            download_tag = False
-
     if download_tag:
         logging.info("Downloading {}...".format(url))
         # open in binary mode
@@ -90,3 +81,17 @@ def download(url: str, file_name: str):
             logging.warning("Download failed.")
     else:
         logging.info("You do not wish to download {}".format(short_file_name))
+
+
+def check_files_presence(files_list: list):
+    """
+    Check that all files exist.
+    :param files_list: list of files you wish to check the presence of.
+    :type files_list: list
+
+    :return: True if all files present, else false.
+    """
+    for file in files_list:
+        if not os.path.exists(file):
+            return False
+    return True
