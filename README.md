@@ -15,6 +15,15 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
 - Aggregate newly updated data
 - Compare aggregated data to miRmap / MBStar and miRDB
 
+# How does it work
+1. Update public databases
+File URLs need to be specified in the config.
+Each file is being downloaded, reformated and inserted in MYSQL.
+
+2. Aggregation: to be described...
+
+3. Statistical analysis: to be described...
+
 # How to work on it
 Pull your own branch
 ```shell
