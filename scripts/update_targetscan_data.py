@@ -119,8 +119,16 @@ if __name__ == '__main__':
     predictions_list = read_txt_zip_file(filename=file_name, species="hsa")
 
     # Insert data in mysql DB
-    logging.info("Inserting data in mysql...")
     connection = utilities.mysql_connection(config)
+    if click.confirm("Do you wish to TRUNCATE Targetscan table content "
+                     "before inserting data?", default=False):
+        logging.info("Truncating Targetscan table...")
+        query = "TRUNCATE TABLE Targetscan;"
+        cursor = connection.cursor()
+        cursor.execute(query)
+        cursor.commit()
+
+    logging.info("Inserting data in Targetscan table...")
     query = "INSERT INTO Targetscan (MirName, GeneID, GeneSymbol, ContextScore, WeightedContextScore) " \
             "VALUES (%(miRNA)s, %(Gene ID)s, %(Gene Symbol)s, %(context++ score)s, %(weighted context++ score)s);"
     cursor = connection.cursor()
