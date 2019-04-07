@@ -9,9 +9,11 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - SVMicro
     - PITA
     - miRTarBase
+    - miRecord
     - ComiR
     - miRmap
     - miRDB
+    - miRWalk
 - Aggregate newly updated data
 - Compare aggregated data to miRmap / MBStar and miRDB
 
