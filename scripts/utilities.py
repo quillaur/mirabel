@@ -65,22 +65,19 @@ def download(url: str, file_name: str):
     :param file_name: name of file to write downloaded data in.
     :return: None
     """
-    if download_tag:
-        logging.info("Downloading {}...".format(url))
-        # open in binary mode
-        with open(file_name, "wb") as file:
-            # get request
-            response = get(url)
-            # write to file
-            file.write(response.content)
+    logging.info("Downloading {}...".format(url))
+    # open in binary mode
+    with open(file_name, "wb") as file:
+        # get request
+        response = get(url)
+        # write to file
+        file.write(response.content)
 
-        # Check that download is successful:
-        if os.path.exists(file_name):
-            logging.info("Download successful.")
-        else:
-            logging.warning("Download failed.")
+    # Check that download is successful:
+    if os.path.exists(file_name):
+        logging.info("Download successful.")
     else:
-        logging.info("You do not wish to download {}".format(short_file_name))
+        logging.warning("Download failed.")
 
 
 def check_files_presence(files_list: list):
@@ -95,3 +92,13 @@ def check_files_presence(files_list: list):
         if not os.path.exists(file):
             return False
     return True
+
+
+class Downloader:
+    """
+    General class to download all wanted data.
+    """
+    def __init__(self):
+        """
+        Downloader init.
+        """

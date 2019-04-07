@@ -69,6 +69,7 @@ if __name__ == '__main__':
     # Set variables
     file_name = config["TARGETSCAN"]["SAVE FILE TO"]
     url = config["TARGETSCAN"]["URL"]
+    urls = [config["TARGETSCAN"]["URL_0"], config["TARGETSCAN"]["URL_1"]]
 
     # Download
     try:
