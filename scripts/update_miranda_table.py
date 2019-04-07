@@ -6,9 +6,9 @@
 import logging
 import sys
 import click
-import zipfile
 import os
 import gzip
+from datetime import datetime
 
 # Personal imports
 import utilities
@@ -46,6 +46,9 @@ def read_txt_gzip_file(filename: str, species: str):
 
 
 if __name__ == '__main__':
+    # Start execution timing
+    startTime = datetime.now()
+
     # Set logging module
     logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -93,7 +96,7 @@ if __name__ == '__main__':
 
     # Data post-processing before DB insert
     logging.info("Post-processing and inserting data in Miranda table...")
-    for file in wanted_files[:2]:
+    for file in wanted_files:
         predictions_list = []
 
         for insert_dict in read_txt_gzip_file(filename=file, species="hsa"):
@@ -113,3 +116,4 @@ if __name__ == '__main__':
         logging.info("{} / 4 file(s) done !".format(wanted_files.index(file) + 1))
 
     logging.info("Run completed.")
+    logging.info("Execution time: {}".format(datetime.now() - startTime))
