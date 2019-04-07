@@ -5,7 +5,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
 # TO DO
 - Update public databases:
     - ~~TargetScan~~
-    - miRanda
+    - ~~miRanda~~
     - SVMicro
     - PITA
     - miRTarBase
