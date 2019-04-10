@@ -94,6 +94,14 @@ def check_files_presence(files_list: list):
     return True
 
 
+def truncate_table(config: dict, table: str):
+    connection = mysql_connection(config)
+    logging.info("Truncating {} table...".format(table))
+    query = "TRUNCATE TABLE {};".format(table)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+
 class Downloader:
     """
     General class to download all wanted data.

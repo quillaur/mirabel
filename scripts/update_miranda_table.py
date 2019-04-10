@@ -76,14 +76,14 @@ if __name__ == '__main__':
                              "Do you still wish to download them anyway?", default=False):
             download_tag = False
 
-        if download_tag:
-            for url in urls:
-                try:
-                    utilities.download(url, wanted_files[urls.index(url)])
+    if download_tag:
+        for url in urls:
+            try:
+                utilities.download(url, wanted_files[urls.index(url)])
 
-                except Exception as e:
-                    logging.error("Download issue: {}".format(e))
-                    sys.exit("Run aborted.")
+            except Exception as e:
+                logging.error("Download issue: {}".format(e))
+                sys.exit("Run aborted.")
 
     # Truncating Miranda data content?
     connection = utilities.mysql_connection(config)
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 connection.close()
                 predictions_list = []
 
-        logging.info("{} / 4 file(s) done !".format(wanted_files.index(file) + 1))
+        logging.info("{} / {} file(s) done !".format(wanted_files.index(file) + 1, len(wanted_files)))
 
     logging.info("Run completed.")
     logging.info("Execution time: {}".format(datetime.now() - startTime))

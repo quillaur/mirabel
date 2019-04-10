@@ -7,6 +7,8 @@ import logging
 import sys
 import click
 import zipfile
+from datetime import datetime
+import os
 
 # Personal imports
 import utilities
@@ -21,7 +23,7 @@ def read_txt_zip_file(filename: str, species: str):
     :param species: species you are looking for. So far 'hsa' only.
     :type species: str
 
-    :return: list of dicts of predictions (easier to insert this than list of lists)
+    Yield file content line by line (otherwise 1 file is too large and overload my computer).
 
     Examle parsed_data:
     ['Gene ID', 'Gene Symbol', 'Transcript ID', 'Gene Tax ID', 'miRNA', 'Site Type', 'UTR_start', 'UTR end', 'context++ score', 'context++ score percentile', 'weighted context++ score', 'weighted context++ score percentile']
@@ -39,27 +41,30 @@ def read_txt_zip_file(filename: str, species: str):
     with zipfile.ZipFile(filename, "r") as my_zip:
         for my_txt in my_zip.namelist():
             with my_zip.open(my_txt) as my_file:
-                handle = my_file.read()
+                count = 0
+                for line in my_file:
+                    count += 1
+                    if count == 1:
+                        header = line.decode("utf-8").replace("\n", "").split("\t")
+                        continue
 
-                parsed_data = [row.split("\t") for row in handle.decode("utf-8").split("\n")]
-                header = [elem for elem in parsed_data[0]]
-                del parsed_data[0]
+                    parsed_data = line.decode("utf-8").replace("\n", "").split("\t")
 
-                # Keys of the dict = header item and values = the content of parsed_data
-                predictions_list = []
-                for row in parsed_data:
-                    # Sometimes row = [''] so check length of row before use
-                    if len(row) > 1 and species in row[4]:
+                    if len(parsed_data) > 1 and species in parsed_data[1]:
                         to_insert_dict = {}
                         for key in header:
-                            to_insert_dict[key] = row[header.index(key)]
+                            to_insert_dict[key] = parsed_data[header.index(key)]
 
-                        predictions_list.append(to_insert_dict)
+                        yield to_insert_dict
 
-    return predictions_list
+                    else:
+                        continue
 
 
 if __name__ == '__main__':
+    # Start execution timing
+    startTime = datetime.now()
+
     # Set logging module
     logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -67,48 +72,61 @@ if __name__ == '__main__':
     config = utilities.extract_config()
 
     # Set variables
-    file_name = config["TARGETSCAN"]["SAVE FILE TO"]
-    url = config["TARGETSCAN"]["URL"]
+    dir_name = config["TARGETSCAN"]["SAVE FILE TO"]
     urls = [config["TARGETSCAN"]["URL_0"], config["TARGETSCAN"]["URL_1"]]
 
+    # Prepare local file paths
+    wanted_files = []
+    for url in urls:
+        file_name = url.split("/")[-1]
+        file_name = os.path.join(dir_name, file_name)
+        wanted_files.append(file_name)
+
+    # Check that file was not already downloaded
+    download_tag = utilities.check_files_presence(files_list=wanted_files)
+
     # Download
-    try:
-        # Check that file was not already downloaded
-        download_tag = utilities.check_files_presence(files_list=[file_name])
-        short_file_name = file_name.split("/")[-1]
-        if download_tag:
-            # If so, do you wish to download it anyway?
-            if not click.confirm("{} already exists on your system. "
-                                 "Do you still wish to download it anyway?".format(short_file_name), default=False):
-                download_tag = False
+    if download_tag:
+        # If so, do you wish to download it anyway?
+        if click.confirm("The files you wish to download already exists on your system. "
+                         "Do you still wish to download them anyway?", default=False):
+            # If user answer 'yes' then I need to download all files.
+            download_tag = False
 
-        if download_tag:
-            utilities.download(url, file_name)
+    if not download_tag:
+        for url in urls:
+            try:
+                utilities.download(url, wanted_files[urls.index(url)])
 
-    except Exception as e:
-        logging.error("Download issue: {}".format(e))
-        sys.exit("Run aborted.")
+            except Exception as e:
+                logging.error("Download issue: {}".format(e))
+                sys.exit("Run aborted.")
+
+    # Truncating table data content?
+    if click.confirm("Do you wish to TRUNCATE Targetscan table content "
+                     "before inserting data?", default=True):
+        utilities.truncate_table(config, table="Targetscan")
 
     # Data post-processing before DB insert
-    logging.info("Post-processing data...")
-    predictions_list = read_txt_zip_file(filename=file_name, species="hsa")
+    logging.info("Post-processing and inserting data in Targetscan table...")
+    for file in wanted_files:
+        predictions_list = []
 
-    # Insert data in mysql DB
-    connection = utilities.mysql_connection(config)
-    if click.confirm("Do you wish to TRUNCATE Targetscan table content "
-                     "before inserting data?", default=False):
-        logging.info("Truncating Targetscan table...")
-        query = "TRUNCATE TABLE Targetscan;"
-        cursor = connection.cursor()
-        cursor.execute(query)
-        cursor.commit()
+        for insert_dict in read_txt_zip_file(filename=file, species="hsa"):
+            predictions_list.append(insert_dict)
 
-    logging.info("Inserting data in Targetscan table...")
-    query = "INSERT INTO Targetscan (MirName, GeneID, GeneSymbol, ContextScore, WeightedContextScore) " \
-            "VALUES (%(miRNA)s, %(Gene ID)s, %(Gene Symbol)s, %(context++ score)s, %(weighted context++ score)s);"
-    cursor = connection.cursor()
+            if len(predictions_list) > 1000:
+                query = "INSERT INTO Targetscan (MirName, GeneID, GeneSymbol, ContextScore, WeightedContextScore) " \
+                        "VALUES (%(miRNA)s, %(Gene ID)s, %(Gene Symbol)s, %(context++ score)s, " \
+                        "%(weighted context++ score)s);"
+                connection = utilities.mysql_connection(config)
+                cursor = connection.cursor()
+                cursor.executemany(query, predictions_list)
+                connection.commit()
+                connection.close()
+                predictions_list = []
 
-    for sub_list in utilities.chunk(predictions_list, 1000):
-        cursor.executemany(query, sub_list)
-        connection.commit()
-    connection.close()
+        logging.info("{} / {} file(s) done !".format(wanted_files.index(file) + 1, len(wanted_files)))
+
+    logging.info("Run completed.")
+    logging.info("Execution time: {}".format(datetime.now() - startTime))
