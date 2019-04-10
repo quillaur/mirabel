@@ -50,7 +50,7 @@ def read_txt_zip_file(filename: str, species: str):
 
                     parsed_data = line.decode("utf-8").replace("\n", "").split("\t")
 
-                    if len(parsed_data) > 1 and species in parsed_data[1]:
+                    if len(parsed_data) > 1 and species in parsed_data[4]:
                         to_insert_dict = {}
                         for key in header:
                             to_insert_dict[key] = parsed_data[header.index(key)]

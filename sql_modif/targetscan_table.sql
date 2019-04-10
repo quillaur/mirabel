@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS Targetscan(
 	MirName VARCHAR(50) NOT NULL,
 	GeneID VARCHAR(50) NOT NULL,
 	GeneSymbol VARCHAR(50),
-	ContextScore INT(10),
-	WeightedContextScore INT(10),
+	ContextScore FLOAT,
+	WeightedContextScore FLOAT,
 	PRIMARY KEY (IdTargetscan)
 );
