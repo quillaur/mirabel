@@ -147,7 +147,7 @@ class Updater:
     def run(self):
         self.truncate_table()
 
-        logging.info("Post-processing and inserting data in {} table...".format(self.db_name))
+        logging.info("Processing and inserting data in {} table...".format(self.db_name))
         for file in self.filenames:
             self.read_downloaded_file(filename=file)
 
