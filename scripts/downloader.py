@@ -34,7 +34,7 @@ class Downloader:
 
         # Download path and URL
         self.dir_name = self.config[self.db_name]["SAVE FILE TO"]
-        self.urls = [self.config[self.db_name][url] for url in self.config[self.db_name] if "URL" in url]
+        self.urls = [self.config[self.db_name][url] for url in self.config[self.db_name] if "url" in url]
         self.filenames = [os.path.join(self.dir_name, url.split("/")[-1]) for url in self.urls]
 
     def download(self, url: str, file_name: str):
