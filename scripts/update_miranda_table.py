@@ -9,9 +9,11 @@ import click
 import os
 import gzip
 from datetime import datetime
+import argparse
 
 # Personal imports
 import utilities
+from downloader import Downloader
 
 
 def read_txt_gzip_file(filename: str, species: str):
@@ -56,64 +58,44 @@ if __name__ == '__main__':
     config = utilities.extract_config()
 
     # Set variables
-    dir_name = config["MIRANDA"]["SAVE FILE TO"]
-    urls = [config["MIRANDA"]["URL_0"], config["MIRANDA"]["URL_1"],
-            config["MIRANDA"]["URL_2"], config["MIRANDA"]["URL_3"]]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', action="store_true", help="If -d present: download all files, else don't.")
+    args = parser.parse_args()
 
-    # Prepare local file paths
-    wanted_files = []
-    for url in urls:
-        file_name = url.split("/")[-1]
-        file_name = os.path.join(dir_name, file_name)
-        wanted_files.append(file_name)
+    if args.d:
+        # Launch download (db_name must be spelled the same way as in your config !)
+        downloader = Downloader(db_name="MIRANDA")
+        downloader.run()
 
-    # Check that file was not already downloaded
-    download_tag = utilities.check_files_presence(files_list=wanted_files)
-
-    if download_tag:
-        # If so, do you wish to download it anyway?
-        if not click.confirm("The files you wish to download already exists on your system. "
-                             "Do you still wish to download them anyway?", default=False):
-            download_tag = False
-
-    if download_tag:
-        for url in urls:
-            try:
-                utilities.download(url, wanted_files[urls.index(url)])
-
-            except Exception as e:
-                logging.error("Download issue: {}".format(e))
-                sys.exit("Run aborted.")
-
-    # Truncating Miranda data content?
-    connection = utilities.mysql_connection(config)
-    if click.confirm("Do you wish to TRUNCATE Miranda table content "
-                     "before inserting data?", default=True):
-        logging.info("Truncating Miranda table...")
-        query = "TRUNCATE TABLE Miranda;"
-        cursor = connection.cursor()
-        cursor.execute(query)
-
-    # Data post-processing before DB insert
-    logging.info("Post-processing and inserting data in Miranda table...")
-    for file in wanted_files:
-        predictions_list = []
-
-        for insert_dict in read_txt_gzip_file(filename=file, species="hsa"):
-            predictions_list.append(insert_dict)
-
-            if len(predictions_list) > 1000:
-                # Insert in mysql
-                query = "INSERT INTO Miranda (MirName, GeneID, GeneSymbol, MirsvrScore) " \
-                        "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(mirsvr_score)s);"
-                connection = utilities.mysql_connection(config)
-                cursor = connection.cursor()
-                cursor.executemany(query, predictions_list)
-                connection.commit()
-                connection.close()
-                predictions_list = []
-
-        logging.info("{} / {} file(s) done !".format(wanted_files.index(file) + 1, len(wanted_files)))
-
-    logging.info("Run completed.")
-    logging.info("Execution time: {}".format(datetime.now() - startTime))
+    # # Truncating Miranda data content?
+    # connection = utilities.mysql_connection(config)
+    # if click.confirm("Do you wish to TRUNCATE Miranda table content "
+    #                  "before inserting data?", default=True):
+    #     logging.info("Truncating Miranda table...")
+    #     query = "TRUNCATE TABLE Miranda;"
+    #     cursor = connection.cursor()
+    #     cursor.execute(query)
+    #
+    # # Data post-processing before DB insert
+    # logging.info("Post-processing and inserting data in Miranda table...")
+    # for file in wanted_files:
+    #     predictions_list = []
+    #
+    #     for insert_dict in read_txt_gzip_file(filename=file, species="hsa"):
+    #         predictions_list.append(insert_dict)
+    #
+    #         if len(predictions_list) > 1000:
+    #             # Insert in mysql
+    #             query = "INSERT INTO Miranda (MirName, GeneID, GeneSymbol, MirsvrScore) " \
+    #                     "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(mirsvr_score)s);"
+    #             connection = utilities.mysql_connection(config)
+    #             cursor = connection.cursor()
+    #             cursor.executemany(query, predictions_list)
+    #             connection.commit()
+    #             connection.close()
+    #             predictions_list = []
+    #
+    #     logging.info("{} / {} file(s) done !".format(wanted_files.index(file) + 1, len(wanted_files)))
+    #
+    # logging.info("Run completed.")
+    # logging.info("Execution time: {}".format(datetime.now() - startTime))

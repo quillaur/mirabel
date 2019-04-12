@@ -1,14 +1,12 @@
 # Author: Aurélien Quillet
 # Contact: aurelien.quillet@gmail.com
 # Date: 29/03/2019
-# Purpose: read configuration files
+# Purpose: library of many useful functions.
 
 import configparser
 import os
 import mysql.connector
-import click
 import logging
-from requests import get  # to make GET request
 
 # Set logging module
 logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
@@ -58,28 +56,6 @@ def chunk(input_list: list, chunk_size: int):
         yield input_list[i:i + chunk_size]
 
 
-def download(url: str, file_name: str):
-    """
-    Download file from URL.
-    :param url: address to get the file from.
-    :param file_name: name of file to write downloaded data in.
-    :return: None
-    """
-    logging.info("Downloading {}...".format(url))
-    # open in binary mode
-    with open(file_name, "wb") as file:
-        # get request
-        response = get(url)
-        # write to file
-        file.write(response.content)
-
-    # Check that download is successful:
-    if os.path.exists(file_name):
-        logging.info("Download successful.")
-    else:
-        logging.warning("Download failed.")
-
-
 def check_files_presence(files_list: list):
     """
     Check that all files exist.
@@ -100,13 +76,3 @@ def truncate_table(config: dict, table: str):
     query = "TRUNCATE TABLE {};".format(table)
     cursor = connection.cursor()
     cursor.execute(query)
-
-
-class Downloader:
-    """
-    General class to download all wanted data.
-    """
-    def __init__(self):
-        """
-        Downloader init.
-        """
