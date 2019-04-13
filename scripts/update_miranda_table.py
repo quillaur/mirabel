@@ -34,7 +34,7 @@ if __name__ == '__main__':
         downloader.run()
 
     # Update mysql DB
-    updater = Updater(db_name="MIRANDA")
+    updater = Updater(db_name="Miranda")
     updater.run()
 
     logging.info("Run completed.")

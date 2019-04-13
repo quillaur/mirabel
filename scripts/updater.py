@@ -34,19 +34,19 @@ class Updater:
         self.db_name = db_name
 
         # File paths
-        self.dir_name = self.config[self.db_name]["SAVE FILE TO"]
-        self.urls = [self.config[self.db_name][url] for url in self.config[self.db_name] if "url" in url]
+        self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
+        self.urls = [self.config[self.db_name.upper()][url] for url in self.config[self.db_name.upper()] if "url" in url]
         self.filenames = [os.path.join(self.dir_name, url.split("/")[-1]) for url in self.urls]
 
     def truncate_table(self):
         connection = utilities.mysql_connection(self.config)
         self.logger.info("Truncating {} table...".format(self.db_name))
-        query = "TRUNCATE TABLE Miranda;"
+        query = "TRUNCATE TABLE {};".format(self.db_name)
         cursor = connection.cursor()
         cursor.execute(query)
 
         # Test if truncate worked
-        query = "SELECT count(*) FROM Miranda;"
+        query = "SELECT count(*) FROM {};".format(self.db_name)
         cursor.execute(query)
         if cursor.fetchone()[0] == 0:
             self.logger.info("Truncate successful !")
@@ -109,7 +109,9 @@ class Updater:
         predictions_list = []
         if ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
-                for insert_dict in self.parse_lines(file=my_file, mir_col=1, species="hsa"):
+                for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species="hsa"):
                     predictions_list.append(insert_dict)
                     predictions_list = self.insert_into_db(predictions_list, max_list_size=1000)
 
@@ -117,7 +119,9 @@ class Updater:
             with zipfile.ZipFile(filename, "r") as my_zip:
                 for my_txt in my_zip.namelist():
                     with my_zip.open(my_txt) as my_file:
-                        for insert_dict in self.parse_lines(file=my_file, mir_col=4, species="hsa"):
+                        for insert_dict in self.parse_lines(file=my_file,
+                                                            mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                            species="hsa"):
                             predictions_list.append(insert_dict)
                             predictions_list = self.insert_into_db(predictions_list, max_list_size=1000)
 
@@ -132,8 +136,8 @@ class Updater:
         """
         if len(predictions_list) > max_list_size:
             # Insert in mysql
-            query = "INSERT INTO Miranda (MirName, GeneID, GeneSymbol, MirsvrScore) " \
-                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(mirsvr_score)s);"
+            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, MirsvrScore) " \
+                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(mirsvr_score)s);".format(self.db_name)
             connection = utilities.mysql_connection(self.config)
             cursor = connection.cursor()
             cursor.executemany(query, predictions_list)
