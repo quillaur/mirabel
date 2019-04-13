@@ -1,7 +1,7 @@
 # Author: Aurélien Quillet
 # Contact: aurelien.quillet@gmail.com
-# Date: 07/04/2019
-# Purpose: Get raw data from miranda website
+# Date: 11/04/2019
+# Purpose: Get raw data from PITA website
 
 import logging
 from datetime import datetime
@@ -30,11 +30,11 @@ if __name__ == '__main__':
 
     if args.d:
         # Launch download (db_name must be spelled the same way as in your config !)
-        downloader = Downloader(db_name="MIRANDA")
+        downloader = Downloader(db_name="PITA")
         downloader.run()
 
     # Update mysql DB
-    updater = Updater(db_name="Miranda")
+    updater = Updater(db_name="Pita")
     updater.run()
 
     logging.info("Run completed.")

@@ -1,14 +1,32 @@
 [TARGETSCAN]
-URL_0:
-URL_1:
-SAVE FILE TO:
+URL_0: ../Conserved_Site_Context_Scores.txt.zip
+URL_1: ../Nonconserved_Site_Context_Scores.txt.zip
+SAVE FILE TO: ../mirabel/targetscan/data_raw/
+MIR_NAME_COL: 4
+Gene ID: gene_id
+Gene Symbol: gene_symbol
+miRNA: mirna_name
+weighted context++ score: score
 
 [MIRANDA]
-URL_0:
-URL_1:
-URL_2:
-URL_3:
-SAVE FILE TO:
+URL_0: ../human_predictions_S_C_aug2010.txt.gz
+URL_1: ../human_predictions_S_0_aug2010.txt.gz
+URL_2: ../human_predictions_0_C_aug2010.txt.gz
+URL_3: ../human_predictions_0_0_aug2010.txt.gz
+SAVE FILE TO: ../mirabel/miranda/data_raw/
+MIR_NAME_COL: 1
+gene_id: gene_id
+gene_symbol: gene_symbol
+mirna_name: mirna_name
+mirsvr_score: score
+
+[PITA]..https://genie.weizmann.ac.il/pubs/mir07/catalogs/PITA_targets_hg18_3_15_ALL.tab.gz
+SAVE FILE TO: ../mirabel/pita/data_raw/
+MIR_NAME_COL: 2
+RefSeq: gene_id
+Name: gene_symbol
+microRNA: mirna_name
+Score: score
 
 [DB]
 HOST:
