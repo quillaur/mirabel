@@ -34,9 +34,16 @@ class Updater:
         self.db_name = db_name
 
         # File paths
-        self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
-        self.urls = [self.config[self.db_name.upper()][url] for url in self.config[self.db_name.upper()] if "url" in url]
-        self.filenames = [os.path.join(self.dir_name, url.split("/")[-1]) for url in self.urls]
+        if "Svmicro" in self.db_name:
+            self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
+            self.filenames = []
+            with open(self.config[self.db_name.upper()]["URL_0"], "r") as my_txt:
+                for line in my_txt:
+                    self.filenames.append(os.path.join(self.dir_name, line).strip())
+        else:
+            self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
+            self.urls = [self.config[self.db_name.upper()][url] for url in self.config[self.db_name.upper()] if "url" in url]
+            self.filenames = [os.path.join(self.dir_name, url.split("/")[-1]) for url in self.urls]
 
     def truncate_table(self):
         connection = utilities.mysql_connection(self.config)
@@ -108,13 +115,27 @@ class Updater:
         :return: None
         """
         predictions_list = []
-        if ".gz" in filename:
+        if "Svmicro" in self.db_name:
+            with open(filename, "r") as my_file:
+                for insert_dict in self.parse_svmicro_line(file=my_file, filename=filename):
+                    predictions_list.append(insert_dict)
+                    if len(predictions_list) > 1000:
+                        self.insert_into_db(predictions_list)
+                        predictions_list = []
+
+                self.insert_into_db(predictions_list)
+
+        elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
                 for insert_dict in self.parse_lines(file=my_file,
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
                                                     species="hsa"):
                     predictions_list.append(insert_dict)
-                    predictions_list = self.insert_into_db(predictions_list, max_list_size=1000)
+                    if len(predictions_list) > 1000:
+                        self.insert_into_db(predictions_list)
+                        predictions_list = []
+
+                self.insert_into_db(predictions_list)
 
         elif ".zip" in filename:
             with zipfile.ZipFile(filename, "r") as my_zip:
@@ -124,30 +145,40 @@ class Updater:
                                                             mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
                                                             species="hsa"):
                             predictions_list.append(insert_dict)
-                            predictions_list = self.insert_into_db(predictions_list, max_list_size=1000)
+                            if len(predictions_list) > 1000:
+                                self.insert_into_db(predictions_list)
+                                predictions_list = []
 
-    def insert_into_db(self, predictions_list, max_list_size: int) -> list:
+                        self.insert_into_db(predictions_list)
+
+    def parse_svmicro_line(self, file, filename):
+        for line in file:
+            data = line.replace("\n", "").split("\t")
+            if len(data) > 1:
+                yield {
+                    "mirna_name": filename.split("/")[-1].replace(".txt", ""),
+                    "gene_id": None,
+                    "gene_symbol": data[0],
+                    "score": data[1]
+                }
+            else:
+                continue
+
+    def insert_into_db(self, predictions_list):
         """
         Insert parsed data in mysql DB.
 
         :param predictions_list: list of dictionaries containing parsed data to insert.
-        :param max_list_size: maximum length of list to reach before insertion.
 
-        :return: empty list to reset the loop in which this function is nested.
+        :return: None
         """
-        if len(predictions_list) > max_list_size:
-            # Insert in mysql
-            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
-                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)
-            connection = utilities.mysql_connection(self.config)
-            cursor = connection.cursor()
-            cursor.executemany(query, predictions_list)
-            connection.commit()
-            connection.close()
-
-            return []
-        else:
-            return predictions_list
+        query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
+                "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)
+        connection = utilities.mysql_connection(self.config)
+        cursor = connection.cursor()
+        cursor.executemany(query, predictions_list)
+        connection.commit()
+        connection.close()
 
     def run(self):
         self.truncate_table()
