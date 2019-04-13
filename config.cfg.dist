@@ -28,6 +28,10 @@ Name: gene_symbol
 microRNA: mirna_name
 Score: score
 
+[SVMICRO]
+URL_0: ../mirabel/svmicro/data_raw/mirs_svmicro_list.txt
+SAVE FILE TO: ../mirabel/svmicro/data_raw/
+
 [DB]
 HOST:
 USER:

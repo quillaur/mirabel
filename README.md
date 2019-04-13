@@ -6,7 +6,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
 - Update public databases:
     - ~~TargetScan~~
     - ~~miRanda~~
-    - SVMicro
+    - ~~SVMicro~~
     - ~~PITA~~
     - miRTarBase
     - miRecord
