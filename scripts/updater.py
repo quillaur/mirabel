@@ -92,7 +92,8 @@ class Updater:
             if len(parsed_data) > 1 and species in parsed_data[mir_col]:
                 to_insert_dict = {}
                 for key in header:
-                    to_insert_dict[key] = parsed_data[header.index(key)]
+                    if key in self.config[self.db_name.upper()]:
+                        to_insert_dict[self.config[self.db_name.upper()][key]] = parsed_data[header.index(key)]
 
                 yield to_insert_dict
 
@@ -136,8 +137,8 @@ class Updater:
         """
         if len(predictions_list) > max_list_size:
             # Insert in mysql
-            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, MirsvrScore) " \
-                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(mirsvr_score)s);".format(self.db_name)
+            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
+                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)
             connection = utilities.mysql_connection(self.config)
             cursor = connection.cursor()
             cursor.executemany(query, predictions_list)

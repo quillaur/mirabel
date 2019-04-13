@@ -7,7 +7,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~TargetScan~~
     - ~~miRanda~~
     - SVMicro
-    - PITA
+    - ~~PITA~~
     - miRTarBase
     - miRecord
     - ComiR

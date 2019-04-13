@@ -3,6 +3,6 @@ CREATE TABLE IF NOT EXISTS Miranda(
 	MirName VARCHAR(50) NOT NULL,
 	GeneID VARCHAR(50) NOT NULL,
 	GeneSymbol VARCHAR(50),
-	MirsvrScore FLOAT,
+	Score FLOAT,
 	PRIMARY KEY (IdMiranda)
 );
