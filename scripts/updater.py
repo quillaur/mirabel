@@ -183,6 +183,14 @@ class Updater:
             yield to_insert_dict
 
     def parse_svmicro_line(self, file, filename):
+        """
+        Special data parsin for SVmicro.
+
+        :param file: file object to parse.
+        :param filename: name of file to parse.
+
+        yield dictionary to insert into mysql.
+        """
         for line in file:
             data = line.replace("\n", "").split("\t")
             if len(data) > 1:
