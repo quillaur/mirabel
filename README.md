@@ -9,7 +9,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~SVMicro~~
     - ~~PITA~~
     - ~~miRTarBase~~
-    - miRecord
+    - ~~miRecord~~ (3k interactions, useless and unsupported...)
     - ComiR
     - miRmap
     - miRDB
