@@ -7,9 +7,10 @@ import logging
 import os
 import gzip
 import zipfile
+import pandas
 
 # Personal imports
-import utilities
+from scripts import utilities
 
 
 class Updater:
@@ -125,6 +126,17 @@ class Updater:
 
                 self.insert_into_db(predictions_list)
 
+        elif ".xlsx" in filename:
+            # Read excel file into a dataframe
+            data_xlsx = pandas.read_excel(filename, sheet_name='miRTarBase')
+            for insert_dict in self.parse_xlsx(data_xlsx):
+                predictions_list.append(insert_dict)
+                if len(predictions_list) > 1000:
+                    self.insert_into_db(predictions_list)
+                    predictions_list = []
+
+            self.insert_into_db(predictions_list)
+
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
                 for insert_dict in self.parse_lines(file=my_file,
@@ -151,6 +163,22 @@ class Updater:
 
                         self.insert_into_db(predictions_list)
 
+    def parse_xlsx(self, xlsx_data):
+        """
+        Transform panda dataframe (made out of xlsx file) so that I can insert them into mysql.
+
+        :param xlsx_data: xlsx file content as panda dataframe.
+
+        yield dictionary to insert into mysql.
+        """
+        headers = list(xlsx_data.keys())
+        for indice, row in enumerate(xlsx_data[headers[0]]):
+            to_insert_dict = {}
+            for header in headers:
+                if header in self.config[self.db_name.upper()]:
+                    to_insert_dict[self.config[self.db_name.upper()][header]] = str(xlsx_data[header][indice])
+            yield to_insert_dict
+
     def parse_svmicro_line(self, file, filename):
         for line in file:
             data = line.replace("\n", "").split("\t")
@@ -172,8 +200,12 @@ class Updater:
 
         :return: None
         """
-        query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
-                "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)
+        if "Mirtarbase" in self.db_name:
+            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Experiment) " \
+                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(experiment)s);".format(self.db_name)
+        else:
+            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
+                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
         cursor.executemany(query, predictions_list)
