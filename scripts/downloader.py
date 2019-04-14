@@ -9,7 +9,7 @@ import sys
 from requests import get  # to make GET request
 
 # Personal imports
-import utilities
+from scripts import utilities
 
 
 class Downloader:
