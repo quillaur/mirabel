@@ -34,7 +34,7 @@ if __name__ == '__main__':
     if not args.list:
         # db_name must start with a capitalized letter followed by non-capitalized letters
         # (same as the corresponding SQL tables).
-        db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase"]
+        db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords"]
     else:
         db_list = args.list
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         logging.info("####################################################")
         logging.info("########## {} ##########".format(db.upper()))
         logging.info("####################################################")
-        if args.d:
+        if args.d and not "Svmicro" in db and not "Mirecords" in db:
             # Launch download
             downloader = Downloader(db_name=db.upper())
             downloader.run()

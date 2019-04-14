@@ -126,9 +126,9 @@ class Updater:
 
                 self.insert_into_db(predictions_list)
 
-        elif ".xlsx" in filename:
+        elif ".xls" in filename:
             # Read excel file into a dataframe
-            data_xlsx = pandas.read_excel(filename, sheet_name='miRTarBase')
+            data_xlsx = pandas.read_excel(filename)
             for insert_dict in self.parse_xlsx(data_xlsx):
                 predictions_list.append(insert_dict)
                 if len(predictions_list) > 1000:
@@ -211,7 +211,7 @@ class Updater:
 
         :return: None
         """
-        if "Mirtarbase" in self.db_name:
+        if "Mirtarbase" in self.db_name or "Mirecords" in self.db_name:
             query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Experiment) " \
                     "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(experiment)s);".format(self.db_name)
         else:
