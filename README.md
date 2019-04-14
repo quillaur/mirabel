@@ -8,7 +8,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~miRanda~~
     - ~~SVMicro~~
     - ~~PITA~~
-    - miRTarBase
+    - ~~miRTarBase~~
     - miRecord
     - ComiR
     - miRmap
