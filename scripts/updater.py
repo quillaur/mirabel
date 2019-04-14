@@ -176,7 +176,10 @@ class Updater:
             to_insert_dict = {}
             for header in headers:
                 if header in self.config[self.db_name.upper()]:
-                    to_insert_dict[self.config[self.db_name.upper()][header]] = str(xlsx_data[header][indice])
+                    try:
+                        to_insert_dict[self.config[self.db_name.upper()][header]] = str(xlsx_data[header][indice])
+                    except Exception as e:
+                        to_insert_dict[self.config[self.db_name.upper()][header]] = str(xlsx_data[header][indice].decode("UTF-8"))
             yield to_insert_dict
 
     def parse_svmicro_line(self, file, filename):

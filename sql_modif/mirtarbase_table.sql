@@ -6,3 +6,6 @@ CREATE TABLE IF NOT EXISTS Mirtarbase(
 	Experiment LONGTEXT,
 	PRIMARY KEY (IdMirtarbase)
 );
+
+ALTER TABLE Mirtarbase CONVERT TO CHARACTER SET utf8;
+
