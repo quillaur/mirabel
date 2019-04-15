@@ -42,6 +42,24 @@ Target Gene: gene_symbol
 miRNA: mirna_name
 Experiments: experiment
 
+[MIRECORDS]
+URL_0: ../mirabel/mirecords/data_raw/miRecords_version4.xls
+SAVE FILE TO: ../mirabel/mirecords/data_raw/
+MIR_NAME_COL: 6
+Target gene_Refseq_acc: gene_id
+Target gene_name: gene_symbol
+miRNA_mature_ID: mirna_name
+Reporter_target gene/region: experiment
+
+[COMIR]
+URL_0: http://www.benoslab.pitt.edu/comir/COMIR_script/hsa_data.tar.gz
+SAVE FILE TO: ../mirabel/pita/data_raw/
+MIR_NAME_COL: 2
+RefSeq: gene_id
+Name: gene_symbol
+microRNA: mirna_name
+Score: score
+
 [DB]
 HOST:
 USER:

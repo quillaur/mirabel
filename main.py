@@ -34,7 +34,7 @@ if __name__ == '__main__':
     if not args.list:
         # db_name must start with a capitalized letter followed by non-capitalized letters
         # (same as the corresponding SQL tables).
-        db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords"]
+        db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir"]
     else:
         db_list = args.list
 

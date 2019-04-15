@@ -8,6 +8,7 @@ import os
 import gzip
 import zipfile
 import pandas
+import tarfile
 
 # Personal imports
 from scripts import utilities
@@ -136,6 +137,15 @@ class Updater:
                     predictions_list = []
 
             self.insert_into_db(predictions_list)
+
+        elif "tar.gz" in filename:
+            tar = tarfile.open(filename, "r:gz")
+            for member in tar.getmembers():
+                file = tar.extractfile(member)
+                if file is not None:
+                    for line in file:
+                        print(line)
+                        break
 
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
