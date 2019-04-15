@@ -9,6 +9,7 @@ import gzip
 import zipfile
 import pandas
 import tarfile
+import lzma
 
 # Personal imports
 from scripts import utilities
@@ -73,20 +74,6 @@ class Updater:
         :param species: species you are looking for. So far 'hsa' only.
 
         Yield file content line by line (otherwise file can be too large and overload my computer).
-
-        Examle parsed_data for targetscan:
-        ['Gene ID', 'Gene Symbol', 'Transcript ID', 'Gene Tax ID', 'miRNA', 'Site Type', 'UTR_start', 'UTR end', 'context++ score', 'context++ score percentile', 'weighted context++ score', 'weighted context++ score percentile']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9544', 'mml-miR-23a-3p', '3', '142', '149', '-0.428', '97', '-0.388', '97']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9544', 'mml-miR-23b-3p', '3', '142', '149', '-0.428', '97', '-0.388', '97']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9598', 'ptr-miR-23a', '3', '143', '150', '-0.419', '97', '-0.419', '98']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9598', 'ptr-miR-23b', '3', '143', '150', '-0.419', '97', '-0.419', '98']
-
-        Exemple to_insert_dict for targetscan:
-        {'Gene ID': 'ENSG00000121410.7', 'Gene Symbol': 'A1BG', 'Transcript ID': 'ENST00000263100.3',
-        'Gene Tax ID': '9606', 'miRNA': 'hsa-miR-23b-3p', 'Site Type': '3', 'UTR_start': '143',
-        'UTR end': '150', 'context++ score': '-0.434', 'context++ score percentile': '97',
-        'weighted context++ score': '-0.434', 'weighted context++ score percentile': '98'}
-
         """
         count = 0
         header = ""
@@ -141,11 +128,19 @@ class Updater:
         elif "tar.gz" in filename:
             tar = tarfile.open(filename, "r:gz")
             for member in tar.getmembers():
+                print(member)
                 file = tar.extractfile(member)
                 if file is not None:
-                    for line in file:
-                        print(line)
-                        break
+                    # for line in file.read():
+                    #     print(line)
+                    content = file.read()
+                    print(content.decode("UTF-8"))
+
+        elif ".xz" in filename:
+            with lzma.open(filename) as my_file:
+                for line in my_file:
+                    print(line)
+                    break
 
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
