@@ -10,8 +10,8 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~PITA~~
     - ~~miRTarBase~~
     - ~~miRecord~~ (3k interactions, useless and unsupported...)
-    - ComiR
-    - miRmap
+    - ComiR (Bug on download, so taking data from crihan)
+    - ~~miRmap~~
     - miRDB
     - miRWalk
 - Aggregate newly updated data

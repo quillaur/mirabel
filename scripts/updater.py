@@ -77,13 +77,14 @@ class Updater:
         """
         count = 0
         header = ""
+        separator = "," if "Mirmap" in self.db_name else "\t"
         for line in file:
             count += 1
             if count == 1:
-                header = line.decode("utf-8").replace("\n", "").split("\t")
+                header = line.decode("utf-8").replace("\n", "").split(separator)
                 continue
 
-            parsed_data = line.decode("utf-8").replace("\n", "").split("\t")
+            parsed_data = line.decode("utf-8").replace("\n", "").split(separator)
 
             if len(parsed_data) > 1 and species in parsed_data[mir_col]:
                 to_insert_dict = {}
@@ -138,9 +139,15 @@ class Updater:
 
         elif ".xz" in filename:
             with lzma.open(filename) as my_file:
-                for line in my_file:
-                    print(line)
-                    break
+                for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species="hsa"):
+                    predictions_list.append(insert_dict)
+                    if len(predictions_list) > 1000:
+                        self.insert_into_db(predictions_list)
+                        predictions_list = []
+
+                self.insert_into_db(predictions_list)
 
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
