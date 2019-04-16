@@ -36,6 +36,9 @@ class Updater:
         # Which DB to download
         self.db_name = db_name
 
+        # Which species
+        self.species = "hsa"
+
         # File paths
         if "Svmicro" in self.db_name:
             self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
@@ -65,26 +68,35 @@ class Updater:
 
         connection.close()
 
-    def parse_lines(self, file, mir_col: int, species: str = "hsa"):
+    def parse_lines(self, file, mir_col: int, species: str = "hsa", decode: bool = True):
         """
         Parse line by line to format data before insertion.
 
         :param file: opened file object
         :param mir_col: index of the list containing mirna name.
         :param species: species you are looking for. So far 'hsa' only.
+        :param decode: indicating if content needs to be decode or not. Default is True.
 
         Yield file content line by line (otherwise file can be too large and overload my computer).
         """
         count = 0
         header = ""
-        separator = "," if "Mirmap" in self.db_name else "\t"
+        if "Mirmap" in self.db_name:
+            separator = ","
+        elif "Comir" in self.db_name:
+            separator = " "
+        else:
+            separator = "\t"
+
         for line in file:
             count += 1
             if count == 1:
-                header = line.decode("utf-8").replace("\n", "").split(separator)
+                # Comir has wierd '"' symbol stuck around each word
+                header = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
                 continue
 
-            parsed_data = line.decode("utf-8").replace("\n", "").split(separator)
+            parsed_data = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+            del parsed_data[0]
 
             if len(parsed_data) > 1 and species in parsed_data[mir_col]:
                 to_insert_dict = {}
@@ -115,6 +127,22 @@ class Updater:
 
                 self.insert_into_db(predictions_list)
 
+        elif "Comir" in self.db_name:
+            my_path = self.config[self.db_name.upper()]["SAVE FILE TO"]
+            comir_files = [os.path.join(my_path, f) for f in os.listdir(my_path) if os.path.isfile(os.path.join(my_path, f))]
+            for file in comir_files:
+                with open(file, "r") as my_file:
+                    for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species=self.species,
+                                                    decode=False):
+                        predictions_list.append(insert_dict)
+                        if len(predictions_list) > 1000:
+                            self.insert_into_db(predictions_list)
+                            predictions_list = []
+
+                    self.insert_into_db(predictions_list)
+
         elif ".xls" in filename:
             # Read excel file into a dataframe
             data_xlsx = pandas.read_excel(filename)
@@ -141,7 +169,7 @@ class Updater:
             with lzma.open(filename) as my_file:
                 for insert_dict in self.parse_lines(file=my_file,
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
-                                                    species="hsa"):
+                                                    species=self.species):
                     predictions_list.append(insert_dict)
                     if len(predictions_list) > 1000:
                         self.insert_into_db(predictions_list)
@@ -153,7 +181,7 @@ class Updater:
             with gzip.open(filename, "r") as my_file:
                 for insert_dict in self.parse_lines(file=my_file,
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
-                                                    species="hsa"):
+                                                    species=self.species):
                     predictions_list.append(insert_dict)
                     if len(predictions_list) > 1000:
                         self.insert_into_db(predictions_list)
@@ -167,7 +195,7 @@ class Updater:
                     with my_zip.open(my_txt) as my_file:
                         for insert_dict in self.parse_lines(file=my_file,
                                                             mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
-                                                            species="hsa"):
+                                                            species=self.species):
                             predictions_list.append(insert_dict)
                             if len(predictions_list) > 1000:
                                 self.insert_into_db(predictions_list)

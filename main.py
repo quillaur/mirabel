@@ -51,10 +51,10 @@ if __name__ == '__main__':
         db_list = args.list
 
     for db in db_list:
-        logging.info("####################################################")
+        logging.info("##############################")
         logging.info("########## {} ##########".format(db.upper()))
-        logging.info("####################################################")
-        if args.d and not "Svmicro" in db and not "Mirecords" in db:
+        logging.info("##############################")
+        if args.d and not "Svmicro" in db and not "Mirecords" in db and not "Comir" in db:
             # Launch download
             downloader = Downloader(db_name=db.upper())
             downloader.run()
