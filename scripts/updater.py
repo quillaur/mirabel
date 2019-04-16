@@ -10,6 +10,7 @@ import zipfile
 import pandas
 import tarfile
 import lzma
+import sys
 
 # Personal imports
 from scripts import utilities
@@ -91,12 +92,18 @@ class Updater:
         for line in file:
             count += 1
             if count == 1:
-                # Comir has wierd '"' symbol stuck around each word
-                header = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+                if "Mirdb" in self.db_name:
+                    header = ["mirna_name", "", "score", "gene_id"]
+                else:
+                    # Comir has wierd '"' symbol stuck around each word
+                    header = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+                
                 continue
 
             parsed_data = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
-            del parsed_data[0]
+
+            if "Comir" in self.db_name:
+                del parsed_data[0]
 
             if len(parsed_data) > 1 and species in parsed_data[mir_col]:
                 to_insert_dict = {}
@@ -104,6 +111,8 @@ class Updater:
                     if key in self.config[self.db_name.upper()]:
                         to_insert_dict[self.config[self.db_name.upper()][key]] = parsed_data[header.index(key)]
 
+                if "Mirdb" in self.db_name:
+                    to_insert_dict["gene_symbol"] = None
                 yield to_insert_dict
 
             else:
@@ -154,17 +163,6 @@ class Updater:
 
             self.insert_into_db(predictions_list)
 
-        elif "tar.gz" in filename:
-            tar = tarfile.open(filename, "r:gz")
-            for member in tar.getmembers():
-                print(member)
-                file = tar.extractfile(member)
-                if file is not None:
-                    # for line in file.read():
-                    #     print(line)
-                    content = file.read()
-                    print(content.decode("UTF-8"))
-
         elif ".xz" in filename:
             with lzma.open(filename) as my_file:
                 for insert_dict in self.parse_lines(file=my_file,
@@ -176,6 +174,11 @@ class Updater:
                         predictions_list = []
 
                 self.insert_into_db(predictions_list)
+
+        elif ".7z" in filename:
+            logging.warning("Don't know how to handle 7z files yet...")
+            logging.warning("Run aborted.")
+            sys.exit(1)
 
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
