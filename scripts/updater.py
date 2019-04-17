@@ -35,11 +35,14 @@ class Updater:
         # Set project config
         self.config = utilities.extract_config()
 
-        # Which DB to download
+        # Which DB to update
         self.db_name = db_name
 
-        # Which species
         self.species = "hsa"
+        self.mirna_dico = utilities.get_mirna_conversion_info(self.config)
+        self.gene_dico = utilities.get_gene_conversion_info(self.config)
+        self.unknown_mirs = []
+        self.unknown_genes = []
 
         # File paths
         if "Svmicro" in self.db_name:
@@ -52,23 +55,6 @@ class Updater:
             self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
             self.urls = [self.config[self.db_name.upper()][url] for url in self.config[self.db_name.upper()] if "url" in url]
             self.filenames = [os.path.join(self.dir_name, url.split("/")[-1]) for url in self.urls]
-
-    def truncate_table(self):
-        connection = utilities.mysql_connection(self.config)
-        self.logger.info("Truncating {} table...".format(self.db_name))
-        query = "TRUNCATE TABLE {};".format(self.db_name)
-        cursor = connection.cursor()
-        cursor.execute(query)
-
-        # Test if truncate worked
-        query = "SELECT count(*) FROM {};".format(self.db_name)
-        cursor.execute(query)
-        if cursor.fetchone()[0] == 0:
-            self.logger.info("Truncate successful !")
-        else:
-            self.logger.warning("Truncate FAILED !")
-
-        connection.close()
 
     def parse_lines(self, file, mir_col: int, filename: str="", species: str = "hsa", decode: bool = True):
         """
@@ -114,6 +100,7 @@ class Updater:
 
                 if "Mirdb" in self.db_name:
                     to_insert_dict["gene_symbol"] = None
+                    to_insert_dict["gene_id"] = int(to_insert_dict["gene_id"])
                 elif "Mirwalk" in self.db_name:
                     to_insert_dict["gene_id"] = None
                     if "3UTR" in filename:
@@ -122,6 +109,25 @@ class Updater:
                         to_insert_dict["localisation"] = "5UTR"
                     else:
                         to_insert_dict["localisation"] = "CDS"
+
+                # Reformat for insert
+                if "." in to_insert_dict["mirna_name"]:
+                    mir_name = to_insert_dict["mirna_name"].split(".")[0]
+                else:
+                    mir_name = to_insert_dict["mirna_name"]
+                
+                if mir_name in self.mirna_dico:
+                    to_insert_dict["Mimat"] = self.mirna_dico[mir_name]
+                else:
+                    self.unknown_mirs.append(mir_name)
+                    continue
+
+                if not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
+                    if to_insert_dict["gene_symbol"] in self.gene_dico:
+                        to_insert_dict["gene_id"] = self.gene_dico[to_insert_dict["gene_symbol"]]
+                    else:
+                        self.unknown_genes.append(to_insert_dict["gene_symbol"])
+                        continue
 
                 yield to_insert_dict
 
@@ -247,6 +253,31 @@ class Updater:
                         to_insert_dict[self.config[self.db_name.upper()][header]] = str(xlsx_data[header][indice])
                     except Exception as e:
                         to_insert_dict[self.config[self.db_name.upper()][header]] = str(xlsx_data[header][indice].decode("UTF-8"))
+            
+            # Reformat for insert
+            if "." in to_insert_dict["mirna_name"]:
+                mir_name = to_insert_dict["mirna_name"].split(".")[0]
+            elif "[" in to_insert_dict["mirna_name"]:
+                mir_name = to_insert_dict["mirna_name"].strip("[]")
+            else:
+                mir_name = to_insert_dict["mirna_name"]
+            
+            if mir_name in self.mirna_dico:
+                if self.species in mir_name:
+                    to_insert_dict["Mimat"] = self.mirna_dico[mir_name]
+                else:
+                    continue
+            else:
+                self.unknown_mirs.append(mir_name)
+                continue
+
+            if not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
+                if to_insert_dict["gene_symbol"] in self.gene_dico:
+                    to_insert_dict["gene_id"] = self.gene_dico[to_insert_dict["gene_symbol"]]
+                else:
+                    self.unknown_genes.append(to_insert_dict["gene_symbol"])
+                    continue
+
             yield to_insert_dict
 
     def parse_svmicro_line(self, file, filename):
@@ -260,13 +291,20 @@ class Updater:
         """
         for line in file:
             data = line.replace("\n", "").split("\t")
+            mir_name = filename.split("/")[-1].replace(".txt", "")
             if len(data) > 1:
-                yield {
-                    "mirna_name": filename.split("/")[-1].replace(".txt", ""),
-                    "gene_id": None,
+                if data[0] in self.gene_dico:
+                    yield {
+                    "mirna_name": mir_name,
+                    "gene_id": self.gene_dico[data[0]],
                     "gene_symbol": data[0],
-                    "score": data[1]
+                    "score": data[1],
+                    "Mimat": int(mir_name.replace("MIMAT", ""))
                 }
+
+                else:
+                    self.unknown_genes.append(data[0])
+                    continue
             else:
                 continue
 
@@ -279,14 +317,14 @@ class Updater:
         :return: None
         """
         if "Mirtarbase" in self.db_name or "Mirecords" in self.db_name:
-            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Experiment) " \
-                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(experiment)s);".format(self.db_name)
+            query = "INSERT INTO {} (Mimat, GeneID, Experiment) " \
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(experiment)s);".format(self.db_name)
         elif "Mirwalk" in self.db_name:
-            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score, Localisation) " \
-                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s, %(localisation)s);".format(self.db_name)
+            query = "INSERT INTO {} (Mimat, GeneID, Score, Localisation) " \
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s);".format(self.db_name)
         else:
-            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
-                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)
+            query = "INSERT INTO {} (Mimat, GeneID, Score) " \
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s);".format(self.db_name)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
         cursor.executemany(query, predictions_list)
@@ -294,10 +332,18 @@ class Updater:
         connection.close()
 
     def run(self):
-        self.truncate_table()
+        utilities.truncate_table(config=self.config, table=self.db_name)
 
-        logging.info("Processing and inserting data in {} table...".format(self.db_name))
+        self.logger.info("Processing and inserting data in {} table...".format(self.db_name))
         for file in self.filenames:
             self.read_downloaded_file(filename=file)
 
-            logging.info("{} / {} file(s) done !".format(self.filenames.index(file) + 1, len(self.filenames)))
+            self.logger.info("{} / {} file(s) done !".format(self.filenames.index(file) + 1, len(self.filenames)))
+
+        self.unknown_genes = list(set(self.unknown_genes))
+        self.unknown_mirs = list(set(self.unknown_mirs))
+        self.logger.warning("{} miRs interactions could not be inserted because the miR is unknown in the database !".format(len(self.unknown_mirs)))
+        self.logger.warning("Exemples : {}".format(self.unknown_mirs[:100]))
+        self.logger.warning("{} miRs interactions could not be inserted because the gene symbol is unknown in the database !".format(len(self.unknown_genes)))
+        self.logger.warning("Exemples : {}".format(self.unknown_genes[:100]))
+

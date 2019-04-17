@@ -1,9 +1,0 @@
-CREATE TABLE IF NOT EXISTS Mirwalk(
-    IdMirwalk INT UNSIGNED AUTO_INCREMENT,
-	MirName VARCHAR(50) NOT NULL,
-	GeneID VARCHAR(50),
-	GeneSymbol VARCHAR(50) NOT NULL,
-	Score FLOAT,
-	Localisation ENUM('3UTR', '5UTR', 'CDS'),
-	PRIMARY KEY (IdMirwalk)
-);

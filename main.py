@@ -6,6 +6,7 @@
 import logging
 from datetime import datetime
 import argparse
+import sys
 
 # Personal imports
 from scripts import utilities
