@@ -74,20 +74,20 @@ URL_0: http://mirwalk.umm.uni-heidelberg.de/download/hsa_miRWalk_3UTR.7z
 URL_1: http://mirwalk.umm.uni-heidelberg.de/download/hsa_miRWalk_5UTR.7z
 URL_2: http://mirwalk.umm.uni-heidelberg.de/download/hsa_miRWalk_CDS.7z
 SAVE FILE TO: ../mirabel/mirwalk/data_raw/
-MIR_NAME_COL: 2
-RefSeq: gene_id
-Name: gene_symbol
-microRNA: mirna_name
-Score: score
+MIR_NAME_COL: 0
+gene_id: gene_id
+Genesymbol: gene_symbol
+miRNA: mirna_name
+binding_probability: score
 
 [MIRDB]
 URL_0: http://mirdb.org/download/miRDB_v6.0_prediction_result.txt.gz
 SAVE FILE TO: ../mirabel/mirdb/data_raw/
-MIR_NAME_COL: 2
-RefSeq: gene_id
-Name: gene_symbol
-microRNA: mirna_name
-Score: score
+MIR_NAME_COL: 0
+gene_id: gene_id
+gene_symbol: gene_symbol
+mirna_name: mirna_name
+score: score
 
 [DB]
 HOST:

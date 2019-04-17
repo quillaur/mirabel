@@ -11,6 +11,7 @@ import pandas
 import tarfile
 import lzma
 import sys
+# import subprocess
 
 # Personal imports
 from scripts import utilities
@@ -113,6 +114,9 @@ class Updater:
 
                 if "Mirdb" in self.db_name:
                     to_insert_dict["gene_symbol"] = None
+                elif "Mirwalk" in self.db_name:
+                    to_insert_dict["gene_id"] = None
+
                 yield to_insert_dict
 
             else:
@@ -176,9 +180,22 @@ class Updater:
                 self.insert_into_db(predictions_list)
 
         elif ".7z" in filename:
-            logging.warning("Don't know how to handle 7z files yet...")
-            logging.warning("Run aborted.")
-            sys.exit(1)
+            alt_filename = filename.replace(".7z", ".txt")
+            if not os.path.exists(alt_filename):
+                # No known other choice than to uncompress it first...
+                os.system("7z x {} -o{}".format(filename, self.dir_name))
+            else:
+                with open(alt_filename, "r") as my_file:
+                    for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species=self.species,
+                                                    decode=False):
+                        predictions_list.append(insert_dict)
+                        if len(predictions_list) > 1000:
+                            self.insert_into_db(predictions_list)
+                            predictions_list = []
+
+                    self.insert_into_db(predictions_list)
 
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
