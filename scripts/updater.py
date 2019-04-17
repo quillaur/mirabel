@@ -8,6 +8,10 @@ import os
 import gzip
 import zipfile
 import pandas
+import tarfile
+import lzma
+import sys
+# import subprocess
 
 # Personal imports
 from scripts import utilities
@@ -33,6 +37,9 @@ class Updater:
 
         # Which DB to download
         self.db_name = db_name
+
+        # Which species
+        self.species = "hsa"
 
         # File paths
         if "Svmicro" in self.db_name:
@@ -63,45 +70,52 @@ class Updater:
 
         connection.close()
 
-    def parse_lines(self, file, mir_col: int, species: str = "hsa"):
+    def parse_lines(self, file, mir_col: int, species: str = "hsa", decode: bool = True):
         """
         Parse line by line to format data before insertion.
 
         :param file: opened file object
         :param mir_col: index of the list containing mirna name.
         :param species: species you are looking for. So far 'hsa' only.
+        :param decode: indicating if content needs to be decode or not. Default is True.
 
         Yield file content line by line (otherwise file can be too large and overload my computer).
-
-        Examle parsed_data for targetscan:
-        ['Gene ID', 'Gene Symbol', 'Transcript ID', 'Gene Tax ID', 'miRNA', 'Site Type', 'UTR_start', 'UTR end', 'context++ score', 'context++ score percentile', 'weighted context++ score', 'weighted context++ score percentile']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9544', 'mml-miR-23a-3p', '3', '142', '149', '-0.428', '97', '-0.388', '97']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9544', 'mml-miR-23b-3p', '3', '142', '149', '-0.428', '97', '-0.388', '97']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9598', 'ptr-miR-23a', '3', '143', '150', '-0.419', '97', '-0.419', '98']
-        ['ENSG00000121410.7', 'A1BG', 'ENST00000263100.3', '9598', 'ptr-miR-23b', '3', '143', '150', '-0.419', '97', '-0.419', '98']
-
-        Exemple to_insert_dict for targetscan:
-        {'Gene ID': 'ENSG00000121410.7', 'Gene Symbol': 'A1BG', 'Transcript ID': 'ENST00000263100.3',
-        'Gene Tax ID': '9606', 'miRNA': 'hsa-miR-23b-3p', 'Site Type': '3', 'UTR_start': '143',
-        'UTR end': '150', 'context++ score': '-0.434', 'context++ score percentile': '97',
-        'weighted context++ score': '-0.434', 'weighted context++ score percentile': '98'}
-
         """
         count = 0
         header = ""
+        if "Mirmap" in self.db_name:
+            separator = ","
+        elif "Comir" in self.db_name:
+            separator = " "
+        else:
+            separator = "\t"
+
         for line in file:
             count += 1
             if count == 1:
-                header = line.decode("utf-8").replace("\n", "").split("\t")
+                if "Mirdb" in self.db_name:
+                    header = ["mirna_name", "", "score", "gene_id"]
+                else:
+                    # Comir has wierd '"' symbol stuck around each word
+                    header = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+                
                 continue
 
-            parsed_data = line.decode("utf-8").replace("\n", "").split("\t")
+            parsed_data = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+
+            if "Comir" in self.db_name:
+                del parsed_data[0]
 
             if len(parsed_data) > 1 and species in parsed_data[mir_col]:
                 to_insert_dict = {}
                 for key in header:
                     if key in self.config[self.db_name.upper()]:
                         to_insert_dict[self.config[self.db_name.upper()][key]] = parsed_data[header.index(key)]
+
+                if "Mirdb" in self.db_name:
+                    to_insert_dict["gene_symbol"] = None
+                elif "Mirwalk" in self.db_name:
+                    to_insert_dict["gene_id"] = None
 
                 yield to_insert_dict
 
@@ -126,6 +140,22 @@ class Updater:
 
                 self.insert_into_db(predictions_list)
 
+        elif "Comir" in self.db_name:
+            my_path = self.config[self.db_name.upper()]["SAVE FILE TO"]
+            comir_files = [os.path.join(my_path, f) for f in os.listdir(my_path) if os.path.isfile(os.path.join(my_path, f))]
+            for file in comir_files:
+                with open(file, "r") as my_file:
+                    for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species=self.species,
+                                                    decode=False):
+                        predictions_list.append(insert_dict)
+                        if len(predictions_list) > 1000:
+                            self.insert_into_db(predictions_list)
+                            predictions_list = []
+
+                    self.insert_into_db(predictions_list)
+
         elif ".xls" in filename:
             # Read excel file into a dataframe
             data_xlsx = pandas.read_excel(filename)
@@ -137,11 +167,41 @@ class Updater:
 
             self.insert_into_db(predictions_list)
 
+        elif ".xz" in filename:
+            with lzma.open(filename) as my_file:
+                for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species=self.species):
+                    predictions_list.append(insert_dict)
+                    if len(predictions_list) > 1000:
+                        self.insert_into_db(predictions_list)
+                        predictions_list = []
+
+                self.insert_into_db(predictions_list)
+
+        elif ".7z" in filename:
+            alt_filename = filename.replace(".7z", ".txt")
+            if not os.path.exists(alt_filename):
+                # No known other choice than to uncompress it first...
+                os.system("7z x {} -o{}".format(filename, self.dir_name))
+            else:
+                with open(alt_filename, "r") as my_file:
+                    for insert_dict in self.parse_lines(file=my_file,
+                                                    mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
+                                                    species=self.species,
+                                                    decode=False):
+                        predictions_list.append(insert_dict)
+                        if len(predictions_list) > 1000:
+                            self.insert_into_db(predictions_list)
+                            predictions_list = []
+
+                    self.insert_into_db(predictions_list)
+
         elif ".gz" in filename:
             with gzip.open(filename, "r") as my_file:
                 for insert_dict in self.parse_lines(file=my_file,
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
-                                                    species="hsa"):
+                                                    species=self.species):
                     predictions_list.append(insert_dict)
                     if len(predictions_list) > 1000:
                         self.insert_into_db(predictions_list)
@@ -155,7 +215,7 @@ class Updater:
                     with my_zip.open(my_txt) as my_file:
                         for insert_dict in self.parse_lines(file=my_file,
                                                             mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
-                                                            species="hsa"):
+                                                            species=self.species):
                             predictions_list.append(insert_dict)
                             if len(predictions_list) > 1000:
                                 self.insert_into_db(predictions_list)

@@ -48,15 +48,22 @@ class Downloader:
         # open in binary mode
         with open(file_name, "wb") as file:
             # get request
-            response = get(url)
-            # write to file
-            file.write(response.content)
+            response = get(url, stream=True)
+            if response.status_code == 200:
+                # write to file
+                if "tar.gz" in url:
+                    file.write(response.raw.read())
+                else:
+                    file.write(response.content)
+            else:
+                self.logger.warning("No response from URL! : {}".format(url))
 
         # Check that download is successful:
-        if os.path.exists(file_name):
+        if os.path.exists(file_name) and os.stat(file_name).st_size > 0:
             self.logger.info("Download successful.")
         else:
             self.logger.warning("Download failed.")
+            sys.exit("Run aborted.")
 
     def run(self):
         for url in self.urls:

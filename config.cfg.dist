@@ -42,6 +42,53 @@ Target Gene: gene_symbol
 miRNA: mirna_name
 Experiments: experiment
 
+[MIRECORDS]
+URL_0: ../mirabel/mirecords/data_raw/miRecords_version4.xls
+SAVE FILE TO: ../mirabel/mirecords/data_raw/
+MIR_NAME_COL: 6
+Target gene_Refseq_acc: gene_id
+Target gene_name: gene_symbol
+miRNA_mature_ID: mirna_name
+Reporter_target gene/region: experiment
+
+[COMIR]
+URL_0: ../mirabel/comir/data_raw/mirs_comir_list.txt
+SAVE FILE TO: ../mirabel/pita/data_raw/
+MIR_NAME_COL: 2
+Gene_ID: gene_id
+Gene_name: gene_symbol
+microRNA: mirna_name
+Score: score
+
+[MIRMAP]
+URL_0: https://mirmap.ezlab.org/downloads/mirmap201301e/mirmap201301e_homsap_targets_1to1.csv.xz
+SAVE FILE TO: ../mirabel/mirmap/data_raw/
+MIR_NAME_COL: 2
+RefSeq: gene_id
+Name: gene_symbol
+microRNA: mirna_name
+Score: score
+
+[MIRWALK]
+URL_0: http://mirwalk.umm.uni-heidelberg.de/download/hsa_miRWalk_3UTR.7z
+URL_1: http://mirwalk.umm.uni-heidelberg.de/download/hsa_miRWalk_5UTR.7z
+URL_2: http://mirwalk.umm.uni-heidelberg.de/download/hsa_miRWalk_CDS.7z
+SAVE FILE TO: ../mirabel/mirwalk/data_raw/
+MIR_NAME_COL: 0
+gene_id: gene_id
+Genesymbol: gene_symbol
+miRNA: mirna_name
+binding_probability: score
+
+[MIRDB]
+URL_0: http://mirdb.org/download/miRDB_v6.0_prediction_result.txt.gz
+SAVE FILE TO: ../mirabel/mirdb/data_raw/
+MIR_NAME_COL: 0
+gene_id: gene_id
+gene_symbol: gene_symbol
+mirna_name: mirna_name
+score: score
+
 [DB]
 HOST:
 USER:
