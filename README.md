@@ -58,5 +58,5 @@ pip install -r requirements.txt
 python main.py -options
 ```
 options:
-    * -d : download files from public database website. Default is False.
-    * -l or --list <db_name_1> <db_name_2> <db_name_x> : allows you to specify which databases to update. Default = all of them.
+> * -d : download files from public database website. Default is False.
+> * -l or --list <db_name_1> <db_name_2> <db_name_x> : allows you to specify which databases to update. Default = all of them.
