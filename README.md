@@ -12,8 +12,8 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~miRecord~~ (3k interactions, useless and unsupported...)
     - ~~ComiR~~ (Bug on download of the tar.gz, so taking data from crihan)
     - ~~miRmap~~
-    - miRDB
-    - miRWalk
+    - ~~miRDB~~
+    - ~~miRWalk~~
 - Aggregate newly updated data
 - Compare aggregated data to miRmap / MBStar and miRDB
 
