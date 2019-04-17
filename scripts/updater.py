@@ -70,7 +70,7 @@ class Updater:
 
         connection.close()
 
-    def parse_lines(self, file, mir_col: int, species: str = "hsa", decode: bool = True):
+    def parse_lines(self, file, mir_col: int, filename: str="", species: str = "hsa", decode: bool = True):
         """
         Parse line by line to format data before insertion.
 
@@ -116,6 +116,12 @@ class Updater:
                     to_insert_dict["gene_symbol"] = None
                 elif "Mirwalk" in self.db_name:
                     to_insert_dict["gene_id"] = None
+                    if "3UTR" in filename:
+                        to_insert_dict["localisation"] = "3UTR"
+                    elif "5UTR" in filename:
+                        to_insert_dict["localisation"] = "5UTR"
+                    else:
+                        to_insert_dict["localisation"] = "CDS"
 
                 yield to_insert_dict
 
@@ -189,7 +195,8 @@ class Updater:
                     for insert_dict in self.parse_lines(file=my_file,
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
                                                     species=self.species,
-                                                    decode=False):
+                                                    decode=False,
+                                                    filename=alt_filename):
                         predictions_list.append(insert_dict)
                         if len(predictions_list) > 1000:
                             self.insert_into_db(predictions_list)
@@ -274,6 +281,9 @@ class Updater:
         if "Mirtarbase" in self.db_name or "Mirecords" in self.db_name:
             query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Experiment) " \
                     "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(experiment)s);".format(self.db_name)
+        elif "Mirwalk" in self.db_name:
+            query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score, Localisation) " \
+                    "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s, %(localisation)s);".format(self.db_name)
         else:
             query = "INSERT INTO {} (MirName, GeneID, GeneSymbol, Score) " \
                     "VALUES (%(mirna_name)s, %(gene_id)s, %(gene_symbol)s, %(score)s);".format(self.db_name)

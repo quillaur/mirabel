@@ -4,5 +4,6 @@ CREATE TABLE IF NOT EXISTS Mirwalk(
 	GeneID VARCHAR(50),
 	GeneSymbol VARCHAR(50) NOT NULL,
 	Score FLOAT,
+	Localisation ENUM('3UTR', '5UTR', 'CDS'),
 	PRIMARY KEY (IdMirwalk)
 );
