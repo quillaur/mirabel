@@ -7,6 +7,7 @@ import configparser
 import os
 import mysql.connector
 import logging
+import itertools
 
 # Set logging module
 logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
@@ -118,3 +119,24 @@ def get_gene_conversion_info(config: dict):
             result_dico[name] = row[0]
 
     return result_dico
+
+
+def get_mirnas(config: dict, db_name: str):
+    connection = mysql_connection(config)
+    query = "SELECT Mimat FROM {};".format(db_name)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    return set(itertools.chain.from_iterable(cursor))
+
+
+def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str):
+    connection = mysql_connection(config)
+    if "Svmicro" in db_name:
+        query = "SELECT GeneID FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(db_name, mirna, order)
+    else:
+        query = "SELECT GeneID FROM {} WHERE Mimat = {} ORDER BY Score {};".format(db_name, mirna, order)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    return list(itertools.chain.from_iterable(cursor))

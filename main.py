@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import argparse
 import sys
+import csv
 
 # Personal imports
 from scripts import utilities
@@ -52,24 +53,55 @@ if __name__ == '__main__':
         
         db_list = args.list
 
-    for db in db_list:
-        logging.info("##############################")
-        logging.info("########## {} ##########".format(db.upper()))
-        logging.info("##############################")
-        if args.d and not "Svmicro" in db and not "Mirecords" in db and not "Comir" in db:
-            # Launch download
-            downloader = Downloader(db_name=db.upper())
-            downloader.run()
-
-        if args.d:
+    if args.u:
+        for db in db_list:
+            logging.info("##############################")
+            logging.info("########## {} ##########".format(db.upper()))
+            logging.info("##############################")
+            if args.d and not "Svmicro" in db and not "Mirecords" in db and not "Comir" in db:
+                # Launch download
+                downloader = Downloader(db_name=db.upper())
+                downloader.run()
+            
             # Update mysql DB
             updater = Updater(db_name=db)
             updater.run()
 
             logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
 
-    # Aggregate chosen DB
-    
+    # Get common miRNAs
+    logging.info("Getting all common miRNAs between {}...".format(db_list))
+    db_mirs_lists = [utilities.get_mirnas(config, db) for db in db_list]
+    common_mirnas = list(set(db_mirs_lists[0]).intersection(*db_mirs_lists))
 
+    # Define how to rank predictions for DBs
+    # SVmicro = descendant
+    ascendant = ["Targetscan", "Miranda", "Pita"]
+    # Make aggregation for each miRNAs
+    for mirna in common_mirnas:
+        # Get mirna data from DB
+        results_list_of_lists = []
+        for db in db_list:
+            order = "ASC" if db in ascendant else "DESC"
+            predictions_list = utilities.get_predictions_for_mirna(config, db, mirna, order)
+            results_list_of_lists.append(predictions_list)
+
+        # Write results temporary in CSV so as to be aggregated with R
+        with open("resources/tmp_predictions_lists.csv", "w") as my_csv:
+            csv_writer = csv.writer(my_csv, delimiter=";")
+            csv_writer.writerow(db_list)
+            max_size = max([len(sublist) for sublist in results_list_of_lists])
+            while i < max_size:
+                to_write_list = []
+                for sublist in results_list_of_lists:
+                    try:
+                        to_write_list.append(sublist[i])
+                    except IndexError:
+                        to_write_list.append(None)
+
+                csv_writer.writerow(to_write_list)
+
+        # Aggregate with R RobustRankAggreg
+        
     logging.info("Run completed.")
     logging.info("Execution time: {}".format(datetime.now() - startTime))
