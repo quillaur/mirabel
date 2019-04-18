@@ -27,6 +27,7 @@ if __name__ == '__main__':
     # Set variables
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', action="store_true", help="If -d present: download all files, else don't.")
+    parser.add_argument('-u', action="store_true", help="If -u present: update all files, else don't.")
     parser.add_argument('-l', '--list', nargs='*',
                         help='Pass a list of databases you wish to download or upload. Default is all.',
                         default=[])
@@ -60,11 +61,15 @@ if __name__ == '__main__':
             downloader = Downloader(db_name=db.upper())
             downloader.run()
 
-        # Update mysql DB
-        updater = Updater(db_name=db)
-        updater.run()
+        if args.d:
+            # Update mysql DB
+            updater = Updater(db_name=db)
+            updater.run()
 
-        logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
+            logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
+
+    # Aggregate chosen DB
+    
 
     logging.info("Run completed.")
     logging.info("Execution time: {}".format(datetime.now() - startTime))
