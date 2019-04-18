@@ -1,0 +1,82 @@
+CREATE TABLE IF NOT EXISTS Targetscan(
+    IdTargetscan INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdTargetscan)
+);
+
+CREATE TABLE IF NOT EXISTS Svmicro(
+    IdSvmicro INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdSvmicro)
+);
+
+CREATE TABLE IF NOT EXISTS Pita(
+    IdPita INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdPita)
+);
+
+CREATE TABLE IF NOT EXISTS Miranda(
+    IdMiranda INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdMiranda)
+);
+
+CREATE TABLE IF NOT EXISTS Mirwalk(
+    IdMirwalk INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	Localisation ENUM('3UTR', '5UTR', 'CDS'),
+	PRIMARY KEY (IdMirwalk)
+);
+
+CREATE TABLE IF NOT EXISTS Mirtarbase(
+    IdMirtarbase INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Experiment LONGTEXT,
+	PRIMARY KEY (IdMirtarbase)
+);
+ALTER TABLE Mirtarbase CONVERT TO CHARACTER SET utf8;
+
+CREATE TABLE IF NOT EXISTS Mirecords(
+    IdMirecords INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Experiment LONGTEXT,
+	PRIMARY KEY (IdMirecords)
+);
+ALTER TABLE Mirecords CONVERT TO CHARACTER SET utf8;
+
+CREATE TABLE IF NOT EXISTS Mirmap(
+    IdMirmap INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdMirmap)
+);
+
+CREATE TABLE IF NOT EXISTS Mirdb(
+    IdMirdb INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdMirdb)
+);
+
+CREATE TABLE IF NOT EXISTS Comir(
+    IdComir INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdComir)
+);

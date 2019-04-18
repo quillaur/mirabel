@@ -76,3 +76,45 @@ def truncate_table(config: dict, table: str):
     query = "TRUNCATE TABLE {};".format(table)
     cursor = connection.cursor()
     cursor.execute(query)
+
+    # Test if truncate worked
+    query = "SELECT count(*) FROM {};".format(table)
+    cursor.execute(query)
+    if cursor.fetchone()[0] == 0:
+        logging.info("Truncate successful !")
+    else:
+        logging.warning("Truncate FAILED !")
+
+    connection.close()
+
+
+def get_mirna_conversion_info(config: dict):
+    connection = mysql_connection(config)
+    query = "SELECT M.nameR, MM.number FROM miR AS M INNER JOIN miR_mimat AS MM ON M.id = MM.mir_id;"
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    return {
+        row[0]: row[1]
+        for row in cursor
+    }
+
+
+def get_gene_conversion_info(config: dict):
+    connection = mysql_connection(config)
+    query = "SELECT ncbi_gene_id, description, preferredGeneSymbol FROM genes3;"
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    result_dico = {}
+    for row in cursor:
+        gene_names = row[1].replace(";", ",").split(", ")
+        if not isinstance(gene_names, list):
+            gene_names = row[1].split(" ")
+
+        gene_names.append(row[2])
+        gene_names = list(set(gene_names))
+        for name in gene_names:
+            result_dico[name] = row[0]
+
+    return result_dico
