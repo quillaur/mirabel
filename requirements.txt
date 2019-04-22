@@ -3,3 +3,4 @@ click==7.0
 configparser==3.7.4
 mysql-connector==2.1.6
 pandas==0.24.2
+progressbar2==3.39.3

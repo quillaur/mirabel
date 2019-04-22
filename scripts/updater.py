@@ -11,7 +11,6 @@ import pandas
 import tarfile
 import lzma
 import sys
-# import subprocess
 
 # Personal imports
 from scripts import utilities
@@ -51,6 +50,10 @@ class Updater:
             with open(self.config[self.db_name.upper()]["URL_0"], "r") as my_txt:
                 for line in my_txt:
                     self.filenames.append(os.path.join(self.dir_name, line).strip())
+        elif "Mirabel" in self.db_name:
+            self.dir_name = ""
+            self.urls = []
+            self.filenames = []
         else:
             self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
             self.urls = [self.config[self.db_name.upper()][url] for url in self.config[self.db_name.upper()] if "url" in url]

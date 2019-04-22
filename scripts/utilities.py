@@ -95,10 +95,14 @@ def get_mirna_conversion_info(config: dict):
     cursor = connection.cursor()
     cursor.execute(query)
 
-    return {
+    results_dico = {
         row[0]: row[1]
         for row in cursor
     }
+
+    connection.close()
+
+    return results_dico
 
 
 def get_gene_conversion_info(config: dict):
@@ -118,6 +122,8 @@ def get_gene_conversion_info(config: dict):
         for name in gene_names:
             result_dico[name] = row[0]
 
+    connection.close()
+
     return result_dico
 
 
@@ -127,7 +133,11 @@ def get_mirnas(config: dict, db_name: str):
     cursor = connection.cursor()
     cursor.execute(query)
 
-    return set(itertools.chain.from_iterable(cursor))
+    results_set = set(itertools.chain.from_iterable(cursor))
+
+    connection.close()
+
+    return results_set
 
 
 def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str):
@@ -139,4 +149,9 @@ def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str
     cursor = connection.cursor()
     cursor.execute(query)
 
-    return list(itertools.chain.from_iterable(cursor))
+    results_list = list(itertools.chain.from_iterable(cursor))
+
+    connection.close()
+
+    return results_list
+
