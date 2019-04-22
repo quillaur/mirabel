@@ -12,6 +12,7 @@ import sys
 from scripts import utilities
 from scripts.downloader import Downloader
 from scripts.updater import Updater
+from scripts.aggregater import Aggregator
 
 
 if __name__ == '__main__':
@@ -27,14 +28,15 @@ if __name__ == '__main__':
     # Set variables
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', action="store_true", help="If -d present: download all files, else don't.")
+    parser.add_argument('-u', action="store_true", help="If -u present: update all files, else don't.")
     parser.add_argument('-l', '--list', nargs='*',
-                        help='Pass a list of databases you wish to download or upload. Default is all.',
+                        help='Pass the list of databases you wish to use. Default is empty list (but all DB later).',
                         default=[])
     args = parser.parse_args()
 
     # db_name must start with a capitalized letter followed by non-capitalized letters
     # (same as the corresponding SQL tables).
-    # By default, database is as followed.
+    # By default, all databases are used.
     db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk"]
 
     # Check database requested by user is available:
@@ -51,20 +53,25 @@ if __name__ == '__main__':
         
         db_list = args.list
 
-    for db in db_list:
-        logging.info("##############################")
-        logging.info("########## {} ##########".format(db.upper()))
-        logging.info("##############################")
-        if args.d and not "Svmicro" in db and not "Mirecords" in db and not "Comir" in db:
-            # Launch download
-            downloader = Downloader(db_name=db.upper())
-            downloader.run()
+    if args.u:
+        for db in db_list:
+            logging.info("##############################")
+            logging.info("########## {} ##########".format(db.upper()))
+            logging.info("##############################")
+            if args.d and not "Svmicro" in db and not "Mirecords" in db and not "Comir" in db:
+                # Launch download
+                downloader = Downloader(db_name=db.upper())
+                downloader.run()
+            
+            # Update mysql DB
+            updater = Updater(db_name=db)
+            updater.run()
 
-        # Update mysql DB
-        updater = Updater(db_name=db)
-        updater.run()
+            logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
 
-        logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
-
+    # Aggregate common miRna predictions with R RobustRankAggreg
+    aggregator = Aggregator(db_list)
+    aggregator.run()
+        
     logging.info("Run completed.")
     logging.info("Execution time: {}".format(datetime.now() - startTime))

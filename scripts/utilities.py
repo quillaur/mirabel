@@ -7,6 +7,7 @@ import configparser
 import os
 import mysql.connector
 import logging
+import itertools
 
 # Set logging module
 logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
@@ -94,10 +95,14 @@ def get_mirna_conversion_info(config: dict):
     cursor = connection.cursor()
     cursor.execute(query)
 
-    return {
+    results_dico = {
         row[0]: row[1]
         for row in cursor
     }
+
+    connection.close()
+
+    return results_dico
 
 
 def get_gene_conversion_info(config: dict):
@@ -117,4 +122,36 @@ def get_gene_conversion_info(config: dict):
         for name in gene_names:
             result_dico[name] = row[0]
 
+    connection.close()
+
     return result_dico
+
+
+def get_mirnas(config: dict, db_name: str):
+    connection = mysql_connection(config)
+    query = "SELECT Mimat FROM {};".format(db_name)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    results_set = set(itertools.chain.from_iterable(cursor))
+
+    connection.close()
+
+    return results_set
+
+
+def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str):
+    connection = mysql_connection(config)
+    if "Svmicro" in db_name:
+        query = "SELECT GeneID FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(db_name, mirna, order)
+    else:
+        query = "SELECT GeneID FROM {} WHERE Mimat = {} ORDER BY Score {};".format(db_name, mirna, order)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    results_list = list(itertools.chain.from_iterable(cursor))
+
+    connection.close()
+
+    return results_list
+

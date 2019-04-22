@@ -80,3 +80,11 @@ CREATE TABLE IF NOT EXISTS Comir(
 	Score FLOAT,
 	PRIMARY KEY (IdComir)
 );
+
+CREATE TABLE IF NOT EXISTS Mirabel(
+    IdMirabel INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	PRIMARY KEY (IdMirabel)
+);
