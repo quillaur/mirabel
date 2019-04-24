@@ -73,11 +73,12 @@ if __name__ == '__main__':
             logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
 
     # Aggregate common miRna predictions with R RobustRankAggreg
-    aggregator = Aggregator(db_list)
-    aggregator.run()
+    # aggregator = Aggregator(db_list)
+    # aggregator.run()
 
     # Statistical analysis
     if args.list_compare:
+        db_list = ["Mirabel"]
         rocker = Rocker(db_list, list_compare)
         rocker.run()
         

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS Targetscan(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdTargetscan)
 );
 
@@ -11,6 +12,7 @@ CREATE TABLE IF NOT EXISTS Svmicro(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdSvmicro)
 );
 
@@ -19,6 +21,7 @@ CREATE TABLE IF NOT EXISTS Pita(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdPita)
 );
 
@@ -27,6 +30,7 @@ CREATE TABLE IF NOT EXISTS Miranda(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMiranda)
 );
 
@@ -36,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Mirwalk(
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
 	Localisation ENUM('3UTR', '5UTR', 'CDS'),
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMirwalk)
 );
 
@@ -62,6 +67,7 @@ CREATE TABLE IF NOT EXISTS Mirmap(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMirmap)
 );
 
@@ -70,6 +76,7 @@ CREATE TABLE IF NOT EXISTS Mirdb(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMirdb)
 );
 
@@ -78,6 +85,7 @@ CREATE TABLE IF NOT EXISTS Comir(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdComir)
 );
 
@@ -86,5 +94,6 @@ CREATE TABLE IF NOT EXISTS Mirabel(
 	Mimat int(11) NOT NULL,
 	GeneID int(11) NOT NULL,
 	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMirabel)
 );

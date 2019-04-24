@@ -32,6 +32,7 @@ class Aggregator:
         # Variables
         self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap"]
         self.db_list = db_list
+        self.validated_interactions = utilities.get_validated_interactions(self.config)
 
     def get_mirnas_for_each_db(self):
         logging.info("Getting all miRNAs for these databases: {}...".format(self.db_list))
@@ -95,7 +96,8 @@ class Aggregator:
                    to_insert_dico = {
                    "Mimat": mirna, 
                    "gene_id": int(data[0]), 
-                   "score": data[1]
+                   "score": data[1],
+                   "validated": "1" if int(data[0]) in self.validated_interactions[mirna] else "0"
                    }
                    to_insert_list.append(to_insert_dico)
         

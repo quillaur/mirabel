@@ -15,7 +15,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~miRDB~~
     - ~~miRWalk~~
 - ~~Aggregate newly updated data~~
-- Fix aggregation so that it happens on all miRnas and not just common ones.
+- Add validated labels to all data upon update
 - Compare aggregated data to miRmap / MBStar and miRDB
 
 # How does it work

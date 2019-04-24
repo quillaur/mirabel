@@ -8,6 +8,7 @@ import os
 import mysql.connector
 import logging
 import itertools
+from collections import defaultdict
 
 # Set logging module
 logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
@@ -140,12 +141,12 @@ def get_mirnas(config: dict, db_name: str):
     return results_set
 
 
-def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str):
+def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str, elem: str="GeneID"):
     connection = mysql_connection(config)
     if "Svmicro" in db_name:
-        query = "SELECT GeneID FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(db_name, mirna, order)
+        query = "SELECT {} FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(elem, db_name, mirna, order)
     else:
-        query = "SELECT GeneID FROM {} WHERE Mimat = {} ORDER BY Score {};".format(db_name, mirna, order)
+        query = "SELECT {} FROM {} WHERE Mimat = {} ORDER BY Score {};".format(elem, db_name, mirna, order)
     cursor = connection.cursor()
     cursor.execute(query)
 
@@ -155,3 +156,25 @@ def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str
 
     return results_list
 
+
+def get_validated_interactions(config: dict):
+    query = "SELECT Mimat, GeneID FROM Mirtarbase;"
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    result_dico = defaultdict(list)
+
+    for row in cursor:
+        result_dico[row[0]].append(row[1])
+
+    query = "SELECT Mimat, GeneID FROM Mirecords;"
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    for row in cursor:
+        result_dico[row[0]].append(row[1])
+
+    connection.close()
+
+    return result_dico

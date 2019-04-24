@@ -42,6 +42,7 @@ class Updater:
         self.gene_dico = utilities.get_gene_conversion_info(self.config)
         self.unknown_mirs = []
         self.unknown_genes = []
+        self.validated_interactions = utilities.get_validated_interactions(self.config)
 
         # File paths
         if "Svmicro" in self.db_name:
@@ -131,6 +132,9 @@ class Updater:
                     else:
                         self.unknown_genes.append(to_insert_dict["gene_symbol"])
                         continue
+
+                # Get the label
+                to_insert_dict["validated"] = "1" if to_insert_dict["gene_id"] in self.validated_interactions[to_insert_dict["Mimat"]] else "0"
 
                 yield to_insert_dict
 
@@ -297,12 +301,14 @@ class Updater:
             mir_name = filename.split("/")[-1].replace(".txt", "")
             if len(data) > 1:
                 if data[0] in self.gene_dico:
+                    mimat = int(mir_name.replace("MIMAT", ""))
                     yield {
                     "mirna_name": mir_name,
                     "gene_id": self.gene_dico[data[0]],
                     "gene_symbol": data[0],
                     "score": data[1],
-                    "Mimat": int(mir_name.replace("MIMAT", ""))
+                    "Mimat": mimat,
+                    "validated": "1" if self.gene_dico[data[0]] in self.validated_interactions[mimat] else "0"
                 }
 
                 else:
@@ -323,11 +329,11 @@ class Updater:
             query = "INSERT INTO {} (Mimat, GeneID, Experiment) " \
                     "VALUES (%(Mimat)s, %(gene_id)s, %(experiment)s);".format(self.db_name)
         elif "Mirwalk" in self.db_name:
-            query = "INSERT INTO {} (Mimat, GeneID, Score, Localisation) " \
-                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s);".format(self.db_name)
+            query = "INSERT INTO {} (Mimat, GeneID, Score, Localisation, Validated) " \
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s, %(validated)s);".format(self.db_name)
         else:
-            query = "INSERT INTO {} (Mimat, GeneID, Score) " \
-                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s);".format(self.db_name)
+            query = "INSERT INTO {} (Mimat, GeneID, Score, Validated) " \
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s);".format(self.db_name)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
         cursor.executemany(query, predictions_list)
