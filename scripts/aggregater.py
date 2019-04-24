@@ -30,25 +30,25 @@ class Aggregator:
         self.config = utilities.extract_config()
 
         # Variables
-        self.ascendant = ["Targetscan", "Miranda", "Pita"]
+        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap"]
         self.db_list = db_list
 
-    def get_common_mirnas(self):
+    def get_mirnas_for_each_db(self):
         logging.info("Getting all miRNAs for these databases: {}...".format(self.db_list))
-        # db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
+        db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
 
         filename = "resources/tmp_mirna_list.txt"
-        # with open(filename, "w") as my_txt:
-        #     my_txt.write(str(db_mirs_lists))
+        with open(filename, "w") as my_txt:
+            my_txt.write(str(db_mirs_lists))
 
         with open(filename, "r") as my_file:
             handle = my_file.read()
             db_mirs_lists = literal_eval(handle)
 
         logging.info("Intersecting common miRNAs ...")
-        common_mirnas = list(set(db_mirs_lists[0]).intersection(*db_mirs_lists))
+        all_mirnas = list(set([mir for mir_group in db_mirs_lists for mir in mir_group]))
 
-        return common_mirnas
+        return all_mirnas
 
     def get_predictions(self, mirna: int):
         results_list_of_lists = []
@@ -112,16 +112,16 @@ class Aggregator:
         utilities.truncate_table(self.config, "Mirabel")
 
         # Get common mirnas between all aggregated DB
-        common_mirnas = self.get_common_mirnas()
-        logging.info("Aggregating common miRNAs between given databases...")
+        all_mirnas = self.get_mirnas_for_each_db()
+        logging.info("Aggregating predictions between given databases...")
 
         # Make aggregation for each miRNAs
         widgets = ['Test: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
-        pbar = ProgressBar(widgets=widgets, maxval=len(common_mirnas))
+        pbar = ProgressBar(widgets=widgets, maxval=len(all_mirnas))
         pbar.start()
         i = 0
-        for mirna in common_mirnas:
+        for mirna in all_mirnas:
             i += 1
             pbar.update(i)
             predictions_lists = self.get_predictions(mirna)
