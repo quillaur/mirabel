@@ -13,6 +13,7 @@ from scripts import utilities
 from scripts.downloader import Downloader
 from scripts.updater import Updater
 from scripts.aggregater import Aggregator
+from scripts.rocker import Rocker
 
 
 if __name__ == '__main__':
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--list', nargs='*',
                         help='Pass the list of databases you wish to aggregate. Default is empty list (but all DB later).',
                         default=[])
-    parser.add_argument('-lc', '--list_compare', nargs='*',
+    parser.add_argument('-lc', '--list-compare', nargs='*',
                         help='Pass the list of databases you wish to compare to the aggregated ones. Default is empty list.',
                         default=[])
     args = parser.parse_args()
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     # Statistical analysis
     if args.list_compare:
         db_list = ["Mirabel"]
-        rocker = Rocker(db_list, list_compare)
+        rocker = Rocker(db_list, args.list_compare)
         rocker.run()
         
     logging.info("Run completed.")

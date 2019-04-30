@@ -30,7 +30,7 @@ class Aggregator:
         self.config = utilities.extract_config()
 
         # Variables
-        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap"]
+        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel"]
         self.db_list = db_list
         self.validated_interactions = utilities.get_validated_interactions(self.config)
 

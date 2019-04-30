@@ -56,6 +56,8 @@ pip install -r requirements.txt
 
 ## Run the databases update
 ```shell
+sudo chmod +x scripts/aggregation.r
+sudo chmod +x scripts/rocker.r
 python main.py -options
 ```
 options:

@@ -3,11 +3,13 @@
 # Date: 23/04/2019
 # Purpose: Create a module to do statistical analysis of aggregated data.
 
+import os
 import logging
 import subprocess
 import csv
 from ast import literal_eval
 from progressbar import *
+from collections import defaultdict
 
 # Personal imports
 from scripts import utilities
@@ -31,7 +33,7 @@ class Rocker:
         self.config = utilities.extract_config()
 
         # Variables
-        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap"]
+        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel"]
         self.db_list = db_list
         self.db_compare = db_compare
         self.all_db = self.db_list + self.db_compare
@@ -45,56 +47,81 @@ class Rocker:
 
         return common_mirnas
 
-    def write_tmp_predictions_to_file(self, filename: str, predictions_lists: list):
+    def write_tmp_roc_data_to_file(self, filename: str, scores_dict: dict):
         # Write results temporary in CSV so as to be aggregated with R
         with open(filename, "w") as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=";")
-            csv_writer.writerow("score", "label")
-            max_size = max([len(sublist) for sublist in predictions_lists])
-            i = 0
-            while i < max_size:
-                to_write_list = []
-                for sublist in predictions_lists:
-                    try:
-                        to_write_list.append(sublist[i])
-                    except IndexError:
-                        to_write_list.append(None)
-
-                csv_writer.writerow(to_write_list)
-                i += 1
+            csv_writer.writerow(["score", "label"])
+            for mimat in scores_dict:
+                for gene_id in scores_dict[mimat]:
+                    csv_writer.writerow([scores_dict[mimat][gene_id]["Score"], scores_dict[mimat][gene_id]["Validated"]])
 
     def make_rocs(self):
         # Aggregate with R RobustRankAggreg
-        subprocess.call("scripts/aggregation.r")
+        subprocess.call("scripts/rocker.r")
 
-    def get_labels(self):
-        query = "SELECT "
+    def get_scores_and_labels(self, db: str, mirna_list: list):
+        order = "ASC" if db in self.ascendant else "DESC"
+        mirna_list = ", ".join([str(mirna_id) for mirna_id in mirna_list])
+        query = """SELECT Score, Validated, GeneID, Mimat FROM {} 
+                    WHERE Mimat IN ({}) 
+                    ORDER BY Score {};""".format(db, mirna_list, order)
         connection = utilities.mysql_connection(self.config)
+        cursor = connection.cursor()
+        cursor.execute(query)
+        # results_list = [[row[0], row[1], row[2]] for row in cursor]
+        results_dict = defaultdict(dict)
+        for row in cursor:
+            results_dict[row[3]][row[2]] = {
+                "Score": row[0],
+                "Validated": row[1]
+            }
+        connection.close()
+
+        return results_dict
 
     def run(self):
-        # Truncate Mirabel table
-        utilities.truncate_table(self.config, "Mirabel")
+        # # Get common mirnas between all aggregated DB
+        # common_mirnas = self.get_common_mirnas()
 
-        # Get common mirnas between all aggregated DB
-        common_mirnas = self.get_common_mirnas()
-        logging.info("Making roc curves for given databases...")
+        # # Pre-process data for each DB for each miRNAs
+        # scores_dict = {}
+        # for db in self.all_db:
+        #     logging.info("Getting scores and labels for {}...".format(db))
+        #     scores_dict[db] = self.get_scores_and_labels(db, common_mirnas)
 
-        # Pre-process data for each DB for each miRNAs
-        for db in self.all_db:
-            order = "ASC" if db in self.ascendant else "DESC"
-
-            widgets = ['Test: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
-               ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
-            pbar = ProgressBar(widgets=widgets, maxval=len(common_mirnas))
-            pbar.start()
-            i = 0
-            for mirna in common_mirnas:
-                i += 1
-                pbar.update(i)
-                scores_list = utilities.get_predictions_for_mirna(self.config, db, mirna, order, elem="Score")
-                labels_list = self.get_labels()
-                self.write_tmp_predictions_to_file(self.config["FILES"]["TMP_PREDICTIONS"], predictions_lists)
-            pbar.finish()
+        # reformated_scores_dict = {}
+        # for db in self.all_db:
+        #     # Get list of other DB
+        #     other_db = [db_name for db_name in self.all_db if db_name != db]
+        #     logging.info("Intersecting common interactions for {}...".format(db))
+        #     # widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+        #     #    ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
+        #     # pbar = ProgressBar(widgets=widgets, maxval=len(scores_dict[db]))
+        #     # pbar.start()
+        #     # i = 0
+        #     # For each mirna in the db
+        #     reformated_scores_dict[db] = defaultdict(dict)
+        #     count = 0
+        #     for mimat in scores_dict[db]:
+        #         # i += 1
+        #         # pbar.update(i)
+        #         # For each gene in the db
+        #         for gene_id in scores_dict[db][mimat]:
+        #             # Check presence in each other db to compare
+        #             for db_comp in other_db:
+        #                 if gene_id in scores_dict[db_comp][mimat]:
+        #                     reformated_scores_dict[db][mimat][gene_id] = {
+        #                         "Score": scores_dict[db][mimat][gene_id]["Score"],
+        #                         "Validated": scores_dict[db][mimat][gene_id]["Validated"]
+        #                     }
+        #                     count += 1 
+        #                     break
+        #     # pbar.finish()
+        #     logging.info("{} common interactions found for {}.".format(count, db))
+        #     logging.info("Writing scores and labels for {}...".format(db))
+        #     filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
+        #     self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db])
 
         self.make_rocs()
 
