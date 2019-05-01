@@ -8,6 +8,15 @@
     {% for roc in img_list %}
         <img src="{{url_for('static', filename=roc)}}" alt="{{roc}}" height="500" width="500">
     {% endfor %}
-    <!-- <img src="static/Mirabel_Targetscan_roc" alt="{{roc}}"> -->
+
+    {% for auc in auc_stats %}
+        <p>{{ auc }}</p>
+    {% endfor %}
+
+    <form action = "http://localhost:5000/main_page" method = "POST" enctype = "multipart/form-data">
+        <input type = "submit" name = "submit_button" value = "Return to main page" /></p>
+
+    </form>
+
 </body>
 </html>

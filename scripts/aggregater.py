@@ -36,15 +36,15 @@ class Aggregator:
 
     def get_mirnas_for_each_db(self):
         logging.info("Getting all miRNAs for these databases: {}...".format(self.db_list))
-        # db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
+        db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
 
-        filename = "resources/tmp_mirna_list.txt"
+        # filename = "resources/tmp_mirna_list.txt"
         # with open(filename, "w") as my_txt:
         #     my_txt.write(str(db_mirs_lists))
 
-        with open(filename, "r") as my_file:
-            handle = my_file.read()
-            db_mirs_lists = literal_eval(handle)
+        # with open(filename, "r") as my_file:
+        #     handle = my_file.read()
+        #     db_mirs_lists = literal_eval(handle)
 
         all_mirnas = list(set([mir for mir_group in db_mirs_lists for mir in mir_group]))
 
@@ -119,10 +119,10 @@ class Aggregator:
         # Make aggregation for each miRNAs
         widgets = ['Test: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
-        pbar = ProgressBar(widgets=widgets, maxval=len(all_mirnas[:10]))
+        pbar = ProgressBar(widgets=widgets, maxval=len(all_mirnas))
         pbar.start()
         i = 0
-        for mirna in all_mirnas[:10]:
+        for mirna in all_mirnas:
             i += 1
             pbar.update(i)
             predictions_lists = self.get_predictions(mirna)

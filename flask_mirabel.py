@@ -114,6 +114,9 @@ def compare_performances():
                 # Print results only for successful analysis
                 if success:
                     success_db.append(db)
+                else:
+                    print("WARNING: No common interaction between {} and {}!".format(db_main, db))
+
             if success_db:
                 return redirect(url_for("performances_results", db_name = db_main, db_comp = success_db))
             else:
@@ -125,7 +128,20 @@ def compare_performances():
 def performances_results(db_name, db_comp):
     db_comp = literal_eval(db_comp)
     img_list = ["{}_{}_roc.jpg".format(db_name, db_compared) for db_compared in db_comp]
-    return render_template("performances_results.html", img_list = img_list)
+
+    auc_stats = []
+    for db in db_comp:
+        stats_file = "resources/{}_{}_roc_stats.txt".format(db_name, db)
+        with open(stats_file, "r") as my_file:
+            handle = my_file.read()
+            lines = handle.split("\n")
+            for i, line in enumerate(lines):
+                if i == 7:
+                    p_value = float(line)
+
+        auc_stats.append("{} VS {} p-value = {}".format(db_name, db, p_value))
+
+    return render_template("performances_results.html", img_list = img_list, auc_stats = auc_stats)
     
 
 # Other functions

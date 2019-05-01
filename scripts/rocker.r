@@ -66,7 +66,7 @@ for (file in tmp_files_list) {
 	names(all_pauc)[names(all_pauc)=="res0"] = db_name
 }
 interaction_number = nrow(res0)
-title(paste(interaction_number, "common interactions"), col = "black", font = 5)
+title(paste(interaction_number, "common interactions"), col = "black", font = 5, line = -1)
 dev.off()
 print("ROC curve plot done.")
 all_auc$init = NULL
@@ -77,3 +77,5 @@ print(head(all_pauc))
 # Test 2 ROC
 test.roc.0 = roc.test(roc1, roc2, method=c("bootstrap"), boot.n = 100, boot.stratified = TRUE)
 print(test.roc.0)
+# write(test.roc.0, file = paste("resources/", db_name_list[1], "_", db_name_list[2], "_roc_stats.txt", sep = ""))
+lapply(test.roc.0, write, paste("resources/", db_name_list[1], "_", db_name_list[2], "_roc_stats.txt", sep = ""), append=TRUE, ncolumns=1000)
