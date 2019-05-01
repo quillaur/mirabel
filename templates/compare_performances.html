@@ -14,11 +14,9 @@
         </select>
 
         <p>Select which database to compare it with:</p>
-        <select name = "compare">
-            {% for each in db_list %}
-                <option name = "compare" value="{{each}}">{{each}}</option>
-            {% endfor %}
-        </select>
+        {% for each in db_list %}
+            <input type="checkbox" name="compare" value="{{each}}"> {{each}}<br>
+        {% endfor %}
 
         <input type = "submit" name = "submit_button" value = "Submit" /></p>
 

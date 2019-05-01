@@ -19,7 +19,7 @@ class Rocker:
     """
     General class to aggregate all wanted data.
     """
-    def __init__(self, db_list: list, db_compare: list):
+    def __init__(self, db_main: str, db_compare: str):
         """
         Aggregator init.
 
@@ -34,9 +34,10 @@ class Rocker:
 
         # Variables
         self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel"]
-        self.db_list = db_list
-        self.db_compare = db_compare
-        self.all_db = self.db_list + self.db_compare
+        self.db_main = db_main
+        self.db_comp = db_compare
+        self.all_db = [db_main, db_compare]
+        self.ascendant.append(self.db_main)
 
     def get_common_mirnas(self):
         logging.info("Getting all miRNAs between these databases: {}...".format(self.all_db))
@@ -63,9 +64,7 @@ class Rocker:
     def get_scores_and_labels(self, db: str, mirna_list: list):
         order = "ASC" if db in self.ascendant else "DESC"
         mirna_list = ", ".join([str(mirna_id) for mirna_id in mirna_list])
-        query = """SELECT Score, Validated, GeneID, Mimat FROM {} 
-                    WHERE Mimat IN ({}) 
-                    ORDER BY Score {};""".format(db, mirna_list, order)
+        query = """SELECT Score, Validated, GeneID, Mimat FROM {} WHERE Mimat IN ({}) ORDER BY Score {};""".format(db, mirna_list, order)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
         cursor.execute(query)
@@ -84,51 +83,55 @@ class Rocker:
         # Get common mirnas between all aggregated DB
         common_mirnas = self.get_common_mirnas()
 
-        # Pre-process data for each DB for each miRNAs
-        scores_dict = {}
-        for db in self.all_db:
-            logging.info("Getting scores and labels for {}...".format(db))
-            scores_dict[db] = self.get_scores_and_labels(db, common_mirnas)
+        if common_mirnas:
+            # Pre-process data for each DB for each miRNAs
+            scores_dict = {}
+            for db in self.all_db:
+                logging.info("Getting scores and labels for {}...".format(db))
+                scores_dict[db] = self.get_scores_and_labels(db, common_mirnas)
 
-        reformated_scores_dict = {}
-        for db in self.all_db:
-            # Get list of other DB
-            other_db = [db_name for db_name in self.all_db if db_name != db]
-            logging.info("Intersecting common interactions for {}...".format(db))
-            # widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
-            #    ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
-            # pbar = ProgressBar(widgets=widgets, maxval=len(scores_dict[db]))
-            # pbar.start()
-            # i = 0
-            # For each mirna in the db
-            reformated_scores_dict[db] = defaultdict(dict)
-            count = 0
-            count_val = 0
-            for mimat in scores_dict[db]:
-                # i += 1
-                # pbar.update(i)
-                # For each gene in the db
-                for gene_id in scores_dict[db][mimat]:
-                    # Check presence in each other db to compare
-                    for db_comp in other_db:
-                        if gene_id in scores_dict[db_comp][mimat]:
-                            reformated_scores_dict[db][mimat][gene_id] = {
-                                "Score": scores_dict[db][mimat][gene_id]["Score"],
-                                "Validated": scores_dict[db][mimat][gene_id]["Validated"]
-                            }
-                            count += 1 
+            reformated_scores_dict = {}
+            for db in self.all_db:
+                # Get list of other DB
+                other_db = [db_name for db_name in self.all_db if db_name != db]
+                logging.info("Intersecting common interactions for {}...".format(db))
+                # widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+                #    ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
+                # pbar = ProgressBar(widgets=widgets, maxval=len(scores_dict[db]))
+                # pbar.start()
+                # i = 0
+                # For each mirna in the db
+                reformated_scores_dict[db] = defaultdict(dict)
+                count = 0
+                count_val = 0
+                for mimat in scores_dict[db]:
+                    # i += 1
+                    # pbar.update(i)
+                    # For each gene in the db
+                    for gene_id in scores_dict[db][mimat]:
+                        # Check presence in each other db to compare
+                        for db_comp in other_db:
+                            if gene_id in scores_dict[db_comp][mimat]:
+                                reformated_scores_dict[db][mimat][gene_id] = {
+                                    "Score": scores_dict[db][mimat][gene_id]["Score"],
+                                    "Validated": scores_dict[db][mimat][gene_id]["Validated"]
+                                }
+                                count += 1 
 
-                            if scores_dict[db][mimat][gene_id]["Validated"] == '1':
-                                count_val += 1
+                                if scores_dict[db][mimat][gene_id]["Validated"] == '1':
+                                    count_val += 1
 
-                            break
-            # pbar.finish()
-            logging.info("{} common interactions found for {}.".format(count, db))
-            logging.info("Within these common interactions, {} are validated ones.".format(count_val))
-            logging.info("Writing scores and labels for {}...".format(db))
-            filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
-            self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db])
+                                break
+                # pbar.finish()
+                logging.info("{} common interactions found for {}.".format(count, db))
+                logging.info("Within these common interactions, {} are validated ones.".format(count_val))
+                logging.info("Writing scores and labels for {}...".format(db))
+                filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
+                self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db])
 
-        # self.make_rocs()
+            self.make_rocs()
 
-        logging.info("Rock analysis done.")
+            logging.info("Rock analysis done.")
+
+            return True
+        return False

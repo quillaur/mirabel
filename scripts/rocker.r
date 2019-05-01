@@ -17,18 +17,18 @@ db_name_list = c()
 for (file in tmp_files_list) {
 	file = file.path("resources/tmp_roc_data", file)
 	db = strsplit(file, "/")[[1]][3]
-	db_name = strsplit(db, "_")[[1]][1]
+	db_name = gsub("_tmp_roc_data.txt","", db)
 	db_name_list = c(db_name_list, db_name)
 }
 
 print("ROC curve plot initiated...")
-jpeg(paste(db_name_list[1], "_", db_name_list[2], "_roc.jpg"), width = 8, height = 8, units = 'in', res = 300)
+jpeg(paste("static/", db_name_list[1], "_", db_name_list[2], "_roc.jpg", sep = ""), width = 8, height = 8, units = 'in', res = 300)
 i = 1
 
 for (file in tmp_files_list) {
 	file = file.path("resources/tmp_roc_data", file)
 	db = strsplit(file, "/")[[1]][3]
-	db_name = strsplit(db, "_")[[1]][1]
+	db_name = gsub("_tmp_roc_data.txt","", db)
 	res0 = read.table(file, header = TRUE, sep = ";")
 	# res0 = head(res0, 50000)
 	
@@ -65,6 +65,8 @@ for (file in tmp_files_list) {
 	# Rename column
 	names(all_pauc)[names(all_pauc)=="res0"] = db_name
 }
+interaction_number = nrow(res0)
+title(paste(interaction_number, "common interactions"), col = "black", font = 5)
 dev.off()
 print("ROC curve plot done.")
 all_auc$init = NULL
