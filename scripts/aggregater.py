@@ -36,17 +36,16 @@ class Aggregator:
 
     def get_mirnas_for_each_db(self):
         logging.info("Getting all miRNAs for these databases: {}...".format(self.db_list))
-        db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
+        # db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
 
         filename = "resources/tmp_mirna_list.txt"
-        with open(filename, "w") as my_txt:
-            my_txt.write(str(db_mirs_lists))
+        # with open(filename, "w") as my_txt:
+        #     my_txt.write(str(db_mirs_lists))
 
         with open(filename, "r") as my_file:
             handle = my_file.read()
             db_mirs_lists = literal_eval(handle)
 
-        logging.info("Intersecting common miRNAs ...")
         all_mirnas = list(set([mir for mir_group in db_mirs_lists for mir in mir_group]))
 
         return all_mirnas
@@ -103,15 +102,15 @@ class Aggregator:
         
         return to_insert_list
 
-    def update_mirabel(self, mirna):
+    def update_mirabel(self, mirna, db_name):
         to_insert_list = self.get_aggregation_results(mirna)
         # Insert aggregated data in base
-        updater = Updater(db_name="Mirabel")
+        updater = Updater(db_name=db_name)
         updater.insert_into_db(to_insert_list)
 
-    def run(self):
+    def run(self, db_name):
         # Truncate Mirabel table
-        utilities.truncate_table(self.config, "Mirabel")
+        utilities.truncate_table(self.config, db_name)
 
         # Get common mirnas between all aggregated DB
         all_mirnas = self.get_mirnas_for_each_db()
@@ -120,16 +119,16 @@ class Aggregator:
         # Make aggregation for each miRNAs
         widgets = ['Test: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
-        pbar = ProgressBar(widgets=widgets, maxval=len(all_mirnas))
+        pbar = ProgressBar(widgets=widgets, maxval=len(all_mirnas[:10]))
         pbar.start()
         i = 0
-        for mirna in all_mirnas:
+        for mirna in all_mirnas[:10]:
             i += 1
             pbar.update(i)
             predictions_lists = self.get_predictions(mirna)
             self.write_tmp_predictions_to_file(self.config["FILES"]["TMP_PREDICTIONS"], predictions_lists)
             self.make_aggregation()
-            self.update_mirabel(mirna)
+            self.update_mirabel(mirna, db_name)
         pbar.finish()
 
         logging.info("Aggregation done.")

@@ -178,3 +178,91 @@ def get_validated_interactions(config: dict):
     connection.close()
 
     return result_dico
+
+def get_existing_mirabels():
+    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb FROM ExistingMirabel;"
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb"]
+
+    result_dico = defaultdict(list)
+    for row in cursor:
+        db_list = [v for i, v in enumerate(name_list) if row[i] == "1"]
+        result_dico[row[0]].extend(db_list)
+
+    connection.close()
+
+    results_list = []
+    for key, value in result_dico.items():
+        tmp_list = [key]
+        tmp_list.extend(value)
+        results_list.append(tmp_list)
+
+    return results_list
+
+def create_mirabel_table(db_name: str):
+    query = """CREATE TABLE IF NOT EXISTS {0}(
+            Id{0} INT UNSIGNED AUTO_INCREMENT,
+            Mimat int(11) NOT NULL,
+            GeneID int(11) NOT NULL,
+            Score FLOAT,
+            Validated ENUM("0", "1") DEFAULT "0",
+            PRIMARY KEY (Id{0}));""".format(db_name)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.close()
+
+def get_mirabel_metrics(db_name: str):
+    query = "SELECT * FROM {};".format(db_name)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    connection.close()
+
+    interaction_number = 0
+    mimat_list = []
+    gene_list = []
+    validated_number = 0
+    for row in rows:
+        interaction_number += 1
+        mimat_list.append(row[1])
+        gene_list.append(row[2])
+
+        if row[4] == '1':
+            validated_number += 1   
+
+    return interaction_number, len(list(set(mimat_list))), len(list(set(gene_list))), validated_number
+
+def insert_to_existing_mirabels(db_name: str, databases: list):
+    database_names = ", ".join(databases)
+    value_list = ", ".join(['"1"' for db in databases])
+    query = """REPLACE INTO ExistingMirabel (Name, {}) 
+            VALUES ('{}', {});""".format(database_names, db_name, value_list)
+    print(query)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.commit()
+    connection.close()
+
+def delete_table(db_name: str):
+    query = "DROP TABLE IF EXISTS {};".format(db_name)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.commit()
+
+    query = "DELETE FROM ExistingMirabel WHERE Name = '{}';".format(db_name)
+    cursor.execute(query)
+    connection.commit()
+
+    connection.close()

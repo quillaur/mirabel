@@ -103,6 +103,7 @@ class Rocker:
             # For each mirna in the db
             reformated_scores_dict[db] = defaultdict(dict)
             count = 0
+            count_val = 0
             for mimat in scores_dict[db]:
                 # i += 1
                 # pbar.update(i)
@@ -116,13 +117,18 @@ class Rocker:
                                 "Validated": scores_dict[db][mimat][gene_id]["Validated"]
                             }
                             count += 1 
+
+                            if scores_dict[db][mimat][gene_id]["Validated"] == '1':
+                                count_val += 1
+
                             break
             # pbar.finish()
             logging.info("{} common interactions found for {}.".format(count, db))
+            logging.info("Within these common interactions, {} are validated ones.".format(count_val))
             logging.info("Writing scores and labels for {}...".format(db))
             filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
             self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db])
 
-        self.make_rocs()
+        # self.make_rocs()
 
         logging.info("Rock analysis done.")

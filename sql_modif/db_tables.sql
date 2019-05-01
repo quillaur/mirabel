@@ -97,3 +97,15 @@ CREATE TABLE IF NOT EXISTS Mirabel(
 	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMirabel)
 );
+
+CREATE TABLE IF NOT EXISTS ExistingMirabel(
+    Name VARCHAR(50) NOT NULL UNIQUE,
+	Targetscan ENUM("0", "1") DEFAULT "0",
+	Miranda ENUM("0", "1") DEFAULT "0",
+	Pita ENUM("0", "1") DEFAULT "0",
+	Svmicro ENUM("0", "1") DEFAULT "0",
+	Comir ENUM("0", "1") DEFAULT "0",
+	Mirmap ENUM("0", "1") DEFAULT "0",
+	Mirdb ENUM("0", "1") DEFAULT "0",
+	Mirwalk ENUM("0", "1") DEFAULT "0"
+);

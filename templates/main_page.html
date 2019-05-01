@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main page</title>
+</head>
+<body>
+    <h1>Already existing miRabels</h1>
+        {% for each in existing_mirabels %}
+            <p>{{ each }}</p>
+        {% endfor %}
+
+    <form action = "http://localhost:5000/main_page" method = "POST" enctype = "multipart/form-data">
+        <p>Delete one:</p>
+        <input type="text" name="db_name">
+        <input type = "submit" name = "submit_button" value = "Delete" />
+        
+        <h1>Create more miRabels !</h1>
+        <input type = "submit" name = "submit_button" value = "Create a miRabel" />
+
+        <h1>Compare performances !</h1>
+        <input type = "submit" name = "submit_button" value = "Compare performances" />
+    </form>
+</body>
+</html>
