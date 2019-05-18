@@ -117,7 +117,7 @@ class Aggregator:
         logging.info("Aggregating predictions between given databases...")
 
         # Make aggregation for each miRNAs
-        widgets = ['Test: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+        widgets = ['Aggregation: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
         pbar = ProgressBar(widgets=widgets, maxval=len(all_mirnas))
         pbar.start()

@@ -97,29 +97,25 @@ def compare_performances():
             db_main = request.form.get("miRabel")
             db_comp = request.form.getlist("compare")
 
-            success_db = []
-            for db in db_comp:
-                # Clean tmp roc data
-                clean_tmp_roc_data()
+            # Clean tmp roc data
+            clean_tmp_roc_data("resources/tmp_roc_data")
+            clean_tmp_roc_data("resources/tmp_roc_data/random_sets")
 
-                # Check that ROC image does not already exists
+            # Check that ROC image does not already exists
+            for db in db_comp:
                 file = "static/{}_{}_roc.jpg".format(db_main, db) 
                 if os.path.isfile(file):
                     os.remove(file)
 
-                # Make ROC analysis
-                rocker = Rocker(db_main, db)
-                success = rocker.run()
+            # Make ROC analysis
+            rocker = Rocker(db_main, db_comp)
+            success = rocker.run()
 
-                # Print results only for successful analysis
-                if success:
-                    success_db.append(db)
-                else:
-                    print("WARNING: No common interaction between {} and {}!".format(db_main, db))
-
-            if success_db:
-                return redirect(url_for("performances_results", db_name = db_main, db_comp = success_db))
+            # Print results only for successful analysis
+            if success:
+                return redirect(url_for("performances_results", db_name = db_main, db_comp = db_comp))
             else:
+                print("WARNING: No common interaction between {} and {}!".format(db_main, db_comp))
                 return render_template("performances_failed.html")
 
     return render_template("compare_performances.html", db_list = db_list)
@@ -130,14 +126,16 @@ def performances_results(db_name, db_comp):
     img_list = ["{}_{}_roc.jpg".format(db_name, db_compared) for db_compared in db_comp]
 
     auc_stats = []
+    p_value = "computational error"
     for db in db_comp:
         stats_file = "resources/{}_{}_roc_stats.txt".format(db_name, db)
-        with open(stats_file, "r") as my_file:
-            handle = my_file.read()
-            lines = handle.split("\n")
-            for i, line in enumerate(lines):
-                if i == 7:
-                    p_value = float(line)
+        if os.path.isfile(stats_file):
+            with open(stats_file, "r") as my_file:
+                handle = my_file.read()
+                lines = handle.split("\n")
+                for i, line in enumerate(lines):
+                    if i == 7:
+                        p_value = float(line)
 
         auc_stats.append("{} VS {} p-value = {}".format(db_name, db, p_value))
 
@@ -157,8 +155,7 @@ def reformat_list_for_html(db_list):
     return result_list
 
 
-def clean_tmp_roc_data():
-    mypath = "resources/tmp_roc_data"
+def clean_tmp_roc_data(mypath):
     files_list = [os.path.join(mypath, file) for file in os.listdir(mypath)]
 
     for file in files_list:

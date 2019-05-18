@@ -13,6 +13,15 @@ from collections import defaultdict
 # Set logging module
 logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
 
+# widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+#    ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
+# pbar = ProgressBar(widgets=widgets, maxval=len(scores_dict[db]))
+# pbar.start()
+# i = 0
+# i += 1
+# pbar.update(i)
+# pbar.finish()
+
 
 def extract_config():
     """
@@ -150,7 +159,7 @@ def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str
     cursor = connection.cursor()
     cursor.execute(query)
 
-    results_list = list(itertools.chain.from_iterable(cursor))
+    results_list = [row[0] for row in cursor]
 
     connection.close()
 
@@ -266,3 +275,13 @@ def delete_table(db_name: str):
     connection.commit()
 
     connection.close()
+
+def get_common_mirnas(all_db: list):
+    config = extract_config()
+    logging.info("Getting all miRNAs between these databases: {}...".format(all_db))
+    db_mirs_lists = [get_mirnas(config, db) for db in all_db]
+
+    logging.info("Intersecting common miRNAs ...")
+    common_mirnas = list(set(db_mirs_lists[0]).intersection(*db_mirs_lists))
+
+    return common_mirnas
