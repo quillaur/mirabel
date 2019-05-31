@@ -11,6 +11,7 @@ from ast import literal_eval
 from progressbar import *
 from collections import defaultdict
 import random
+from shutil import copyfile
 
 # Personal imports
 from scripts import utilities
@@ -63,6 +64,10 @@ class Rocker:
         subprocess.call("scripts/rocker.r")
         subprocess.call("scripts/random_rocker.r")
 
+    def make_pr(self):
+        subprocess.call("scripts/precis_recall.r")
+        subprocess.call("scripts/random_pr.r")
+
     def get_scores_and_labels(self, db: str, mirna_list: list):
         order = "ASC" if db in self.ascendant else "DESC"
         mirna_list = ", ".join([str(mirna_id) for mirna_id in mirna_list])
@@ -83,10 +88,11 @@ class Rocker:
 
     def make_sub_datasets(self, common_mirnas: list, reformated_scores_dict: dict, db_name: str):
         # Make 10 random sub-sets of 50k interactions
-        sub_dict = {db_name: defaultdict(dict)}
-        c = 0
         sub = 0
+        filenames = []
         while sub < 10:
+            sub_dict = {db_name: defaultdict(dict)}
+            c = 0
             while c < 50000:
                 for mimat in common_mirnas:
                     if mimat in reformated_scores_dict[db_name]:
@@ -100,11 +106,32 @@ class Rocker:
 
             sub += 1
             filename = os.path.join(self.config["FILES"]["TMP_RANDOM_SETS"], "{}_tmp_random_set_{}.txt".format(db_name, sub))
-            self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db_name])
+            self.write_tmp_roc_data_to_file(filename, sub_dict[db_name])
+            filenames.append(filename)
+
+        return filenames
 
     def run(self):
-        # Get common mirnas between all aggregated DB
-        common_mirnas = utilities.get_common_mirnas(self.all_db)
+        # Check if dir exists
+        formated_comp_db = "_".join(self.db_comp)
+        perm_data_dir = os.path.join(self.config["FILES"]["PERM_COMPARISONS"], "{}_vs_{}".format(self.db_main, formated_comp_db))
+        if os.path.isdir(perm_data_dir):
+            return True
+        else:
+            # Get common mirnas between all aggregated DB
+            common_mirnas = utilities.get_common_mirnas(self.all_db)
+
+            # Create a permanent directory to store this comparison
+            perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}".format(self.db_main, formated_comp_db))
+            directories = [perm_data_dir, perm_img_dir]
+        
+            try:
+                for directory in directories:
+                    os.mkdir(directory)
+            except OSError:  
+                print("Creation of the directory {} failed".format(directory))
+            else:  
+                print("Successfully created the directory {}".format(directory))
 
         if common_mirnas:
             # Pre-process data for each DB for each miRNAs
@@ -113,7 +140,6 @@ class Rocker:
                 logging.info("Getting scores and labels for {}...".format(db))
                 scores_dict[db] = self.get_scores_and_labels(db, common_mirnas)
 
-            
             common_genes = defaultdict(list)
             logging.info("Intersecting common interactions for {}...".format(self.all_db))
 
@@ -144,10 +170,13 @@ class Rocker:
             logging.info("Within these common interactions, {} are validated ones.".format(count_val))
             logging.info("Writing scores and labels for {}...".format(self.db_main))
             filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(self.db_main))
+            # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(self.db_main))
             self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[self.db_main])
+            # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[self.db_main])
 
-            self.make_sub_datasets(common_mirnas, reformated_scores_dict, self.db_main)
-                
+            filenames = self.make_sub_datasets(common_mirnas, reformated_scores_dict, self.db_main)
+            filenames.append(filename)
+
             reformated_scores_dict = {}
             for db in self.db_comp:
                 # For each mirna in the db
@@ -161,16 +190,48 @@ class Rocker:
             
                 logging.info("Writing scores and labels for {}...".format(db))
                 filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
+                # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(db))
                 self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db])
+                # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[db])
 
-                self.make_sub_datasets(common_mirnas, reformated_scores_dict, db)
-
+                filenames_1 = self.make_sub_datasets(common_mirnas, reformated_scores_dict, db)
+                filenames_1.append(filename)
+                
                 self.make_rocs()
 
-                # if os.path.isfile(filename):
-                #     os.remove(filename)
+                all_stats = [stat for stat in os.listdir(self.config["FILES"]["RESOURCES"]) if os.path.isfile(os.path.join(self.config["FILES"]["RESOURCES"], stat)) and "results" in stat]
+                for stat in all_stats:
+                    src = os.path.join(self.config["FILES"]["RESOURCES"], stat)
+                    if os.path.isfile(src):
+                        dst = os.path.join(perm_data_dir, stat)
+                        copyfile(src, dst)
+                        os.remove(src)
+                    else:
+                        logging.error("File NOT found: {}".format(src))
+
+                self.make_pr()
+
+                # Copy images and stats results to permanent directory
+                all_img = [img for img in os.listdir("static/") if os.path.isfile(os.path.join("static/", img))]
+                for img in all_img:
+                    src = os.path.join("static/", img)
+                    if os.path.isfile(src):
+                        dst = os.path.join(perm_img_dir, img)
+                        copyfile(src, dst)
+                        os.remove(src)
+                    else:
+                        logging.error("File NOT found: {}".format(src))
+
+                # Remove files so as not to create issue with the next comparison
+                for filename in filenames_1:
+                    if os.path.isfile(filename):
+                        os.remove(filename)
 
             logging.info("Rock analysis done.")
+
+            for filename in filenames:
+                if os.path.isfile(filename):
+                    os.remove(filename)
 
             return True
         return False

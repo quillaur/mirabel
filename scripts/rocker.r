@@ -6,36 +6,60 @@ library("gplots")
 library("pROC")
 library("rowr")
 
+
+compute_pr = function(res_df)
+{
+	pr_df_0 = data.frame(val_number = res_df[1,2])
+	pr_df_0$precision = sum(res_df[1,2])
+	pr_df_0$recall = 0
+	pr_df_0$f_score = 0
+
+	for (x in 2:nrow(res_df))
+	{
+		pr_df_0[x,1] = sum(res_df[1:x,2])
+		pr_df_0[x,2] = pr_df_0[x,1] / x
+		pr_df_0[x,3] = pr_df_0[x,1] / sum(res_df[,2])
+
+		if(pr_df_0[x,3] > 0)
+		{
+			pr_df_0[x,4] = 2*((pr_df_0[x,2] * pr_df_0[x,3])/(pr_df_0[x,2] + pr_df_0[x,3]))
+		}
+		else
+	    {
+	        pr_df_0[x,4] = 0
+	    }
+	}
+
+	return(pr_df_0)
+}
+
 print("I am rocker.py !")
 ori_files_list = list.files("resources/tmp_roc_data")
 tmp_files_list = c()
 db_name_list = c()
-for (file in ori_files_list) {
-	db_name = strsplit(file, "_tmp")[[1]][1]
-	if (!(db_name %in% db_name_list)) {
-		db_name_list = c(db_name_list, db_name)
-	}
-	
+for (file in ori_files_list) 
+{	
 	file = file.path("resources/tmp_roc_data", file)
-	if (file_test("-f", file)) {
+	if (file_test("-f", file)) 
+	{
 		tmp_files_list = c(tmp_files_list, file)
+
+		db_name = strsplit(file, "_tmp")[[1]][1]
+		db_name = strsplit(db_name, "_data/")[[1]][2]
+		if (!(db_name %in% db_name_list)) 
+		{
+			db_name_list = c(db_name_list, db_name)
+		}
 	}
 }
-print(tmp_files_list)
+
+# print(tmp_files_list)
 all_auc = data.frame()
 all_pauc = data.frame()
 increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
 decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk")
 colors = c("darkgreen", "black", "blue", "orange", "red")
 auc_print_int = c(0.5, 0.4, 0.3, 0.2, 0.1)
-
-# db_name_list = c()
-# for (file in tmp_files_list) {
-# 	db_name = strsplit(file, "_tmp")[[1]][1]
-# 	if (!(db_name %in% db_name_list)) {
-# 		db_name_list = c(db_name_list, db_name)
-# 	}	
-# }
 
 print("ROC curve plot initiated...")
 jpeg(paste("static/", db_name_list[1], "_", db_name_list[2], "_roc.jpg", sep = ""), width = 8, height = 8, units = 'in', res = 300)
@@ -53,17 +77,17 @@ for (file in tmp_files_list) {
 		res0 = res0[order(res0$score, decreasing = FALSE),]
 	}
 
-	print(head(res0))
+	# print(head(res0))
 
 	# roc.res0 is a list
 	roc.res0 = roc(label~score, res0)
 	
 	if (db_number > 1) {
 		par(fig = c(0,1,0,1), new = TRUE)
-		plot(roc.res0, type="l", col= colors[db_number], print.auc=TRUE, print.auc.y=auc_print_int[db_number], print.auc.pattern=paste(db_name, ": AUC = %.3f"))
+		plot(roc.res0, type="l", col= colors[db_number])
 		roc2 = roc.res0
 	} else {
-		plot(roc.res0, type="l", col= colors[db_number], print.auc=TRUE, print.auc.y=auc_print_int[db_number], print.auc.pattern=paste(db_name, ": AUC = %.3f"))
+		plot(roc.res0, type="l", col= colors[db_number])
 		roc1 = roc.res0
 	}
 	
@@ -84,21 +108,16 @@ for (file in tmp_files_list) {
 }
 interaction_number = nrow(res0)
 title(paste(interaction_number, "common interactions"), col = "black", font = 5, line = -1)
+legend("topright", inset=.05, fill=colors[1:3], horiz=FALSE, legend = c(db_name_list), text.col = colors[1:3])
 dev.off()
 print("ROC curve plot done.")
 all_auc$init = NULL
 all_pauc$init = NULL
+result_file = paste("resources/", db_name_list[1], "_", db_name_list[2], "_roc_results.txt", sep = "")
+sink(result_file)
 print(head(all_auc))
 print(head(all_pauc))
+sink()
 
-# Test 2 ROC
-# db_name_list = c()
-# for (file in tmp_files_list) {
-# 	db_name = strsplit(file, "_tmp")[[1]][1]
-# 	if (!(db_name %in% db_name_list)) {
-# 		db_name_list = c(db_name_list, db_name)
-# 	}	
-# }
-# test.roc.0 = roc.test(roc1, roc2, method=c("bootstrap"), boot.n = 100, boot.stratified = TRUE)
-# print(test.roc.0)
-# lapply(test.roc.0, write, paste("resources/", db_name_list[1], "_", db_name_list[2], "_roc_stats.txt", sep = ""), append=FALSE, ncolumns=1000)
+print(head(all_auc))
+print(head(all_pauc))

@@ -10,6 +10,11 @@
             <p>{{ each }}</p>
         {% endfor %}
 
+    <h1>Already done comparisons</h1>
+        {% for each in existing_mirabels %}
+            <p>{{ each }}</p>
+        {% endfor %}
+
     <form action = "http://localhost:5000/main_page" method = "POST" enctype = "multipart/form-data">
         <p>Delete one:</p>
         <input type="text" name="db_name">

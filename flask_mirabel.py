@@ -123,21 +123,125 @@ def compare_performances():
 @app.route('/performances_results/<db_name>/<db_comp>', methods=["GET", "POST"])
 def performances_results(db_name, db_comp):
     db_comp = literal_eval(db_comp)
-    img_list = ["{}_{}_roc.jpg".format(db_name, db_compared) for db_compared in db_comp]
+    formated_comp_db = "_".join(db_comp)
+    perm_data_dir = os.path.join("resources/already_done_comparisons", "{}_vs_{}".format(db_name, formated_comp_db))
+    perm_img_dir = os.path.join("static/already_done_comparisons", "{}_vs_{}".format(db_name, formated_comp_db))
+    crop_perm_img_dir = perm_img_dir.replace("static/", "")
+    img_list = [os.path.join(crop_perm_img_dir, "{}_{}_roc.jpg".format(db_name, db_compared)) for db_compared in db_comp]
+    for db_compared in db_comp:
+        img_list.append(os.path.join(crop_perm_img_dir, "{}_{}_pr.jpg".format(db_name, db_compared)))
+        img_list.append(os.path.join(crop_perm_img_dir, "{}_{}_f_score.jpg".format(db_name, db_compared)))
 
     auc_stats = []
-    p_value = "computational error"
+    auc_res = {}
+    p_auc_res = {}
+    pr_auc_res = {}
+    f_score_res = {
+        db_name: {
+            10: None,
+            20: None,
+            40: None,
+            100: None
+        }
+    }
     for db in db_comp:
-        stats_file = "resources/{}_{}_roc_stats.txt".format(db_name, db)
+        auc_res[db_name] = ""
+        auc_res[db] = ""
+        p_auc_res[db_name] = ""
+        p_auc_res[db] = ""
+        pr_auc_res[db_name] = ""
+        pr_auc_res[db] = ""
+        stats_file = os.path.join(perm_data_dir, "{}_{}_roc_results.txt".format(db_name, db))
         if os.path.isfile(stats_file):
             with open(stats_file, "r") as my_file:
                 handle = my_file.read()
                 lines = handle.split("\n")
                 for i, line in enumerate(lines):
-                    if i == 7:
-                        p_value = float(line)
+                    if i == 1:
+                        auc_res[db_name] = round(float(line.split(" ")[3]), 3)
+                        auc_res[db] = round(float(line.split(" ")[4]), 3)
+                    elif i == 3:
+                        p_auc_res[db_name] = round(float(line.split(" ")[1]), 3)
+                        p_auc_res[db] = round(float(line.split(" ")[2]), 3)
 
-        auc_stats.append("{} VS {} p-value = {}".format(db_name, db, p_value))
+        stats_file = os.path.join(perm_data_dir, "{}_{}_pr_results.txt".format(db_name, db))
+        f_score_res[db] = {
+            10: None,
+            20: None,
+            40: None,
+            100: None
+        }
+        if os.path.isfile(stats_file):
+            with open(stats_file, "r") as my_file:
+                handle = my_file.read()
+                lines = handle.split("\n")
+                for i, line in enumerate(lines):
+                    if i == 1:
+                        pr_auc_res[db_name] = round(float(line.split(" ")[3]), 3)
+                        pr_auc_res[db] = round(float(line.split(" ")[4]), 3)
+                    elif i > 9:
+                        possibilities = [item for item in line.split(" ") if item != ""]
+                        if possibilities:
+                            percent = int(possibilities[1].replace("%", ""))
+                            f_score_res[db_name][percent] = round(float(possibilities[2]), 3)
+                            f_score_res[db][percent] = round(float(possibilities[3]), 3)
+                    
+        else:
+            print("File NOT found: {} ".format(stats_file))
+
+        auc_stats.append("{} VS {}:".format(db_name, db))
+        auc_stats.append("ROC_AUC: {} {}".format(auc_res[db_name], auc_res[db]))
+        auc_stats.append("ROC_pAUC: {} {}".format(p_auc_res[db_name], p_auc_res[db]))
+        auc_stats.append("PR_AUC: {} {}".format(pr_auc_res[db_name], pr_auc_res[db]))
+        auc_stats.append("F_scores:")
+        auc_stats.append("    10%: {} {}".format(f_score_res[db_name][10], f_score_res[db][10]))
+        auc_stats.append("    20%: {} {}".format(f_score_res[db_name][20], f_score_res[db][20]))
+        auc_stats.append("    40%: {} {}".format(f_score_res[db_name][40], f_score_res[db][40]))
+        auc_stats.append("    100%: {} {}".format(f_score_res[db_name][100], f_score_res[db][100]))
+
+    # Get statistics
+    db_results = {
+        db_name: {
+            "roc_auc": "",
+            "sem_auc": "",
+            "p_val": ""
+        }
+    }
+    for db in db_comp:
+        db_results[db] = {
+            "roc_auc": "",
+            "sem_auc": "",
+            "p_val": ""
+        }
+        stats_file = os.path.join(perm_data_dir, "{}_{}_stats_results.txt".format(db_name, db))
+        if os.path.isfile(stats_file):
+            with open(stats_file, "r") as my_file:
+                handle = my_file.read()
+                lines = handle.split("\n")
+                for i, line in enumerate(lines):
+                    line = line.replace('"', '')
+                    if i < 25:
+                        if "Mean" in line:
+                            db_results[db_name]["roc_auc"] = round(float(line.split(" ")[2]), 3)
+                            db_results[db]["roc_auc"] = round(float(line.split(" ")[3]), 3)
+                        elif "SEM" in line:
+                            db_results[db_name]["sem_auc"] = round(float(line.split(" ")[2]), 4)
+                            db_results[db]["sem_auc"] = round(float(line.split(" ")[3].replace('"', '')), 4)
+                        elif "p-value" in line:
+                            try:
+                                db_results[db_name]["p_val"] = float(line.split("p-value = ")[1])
+                                db_results[db]["p_val"] = float(line.split("p-value = ")[1])
+                            except:
+                                db_results[db_name]["p_val"] = float(line.split("p-value < ")[1])
+                                db_results[db]["p_val"] = float(line.split("p-value < ")[1])
+                                
+        auc_stats.append("\n#################")
+        auc_stats.append("STATSTICS")
+        auc_stats.append("#################\n")
+        auc_stats.append("{} VS {}:".format(db_name, db))
+        auc_stats.append("Mean AUC: {} {}".format(db_results[db_name]["roc_auc"], db_results[db]["roc_auc"]))
+        auc_stats.append("SEM: {} {}".format(db_results[db_name]["sem_auc"], db_results[db]["sem_auc"]))
+        auc_stats.append("p-value: {}".format(db_results[db_name]["p_val"]))
 
     return render_template("performances_results.html", img_list = img_list, auc_stats = auc_stats)
     
