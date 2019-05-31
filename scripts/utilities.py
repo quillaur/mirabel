@@ -8,9 +8,19 @@ import os
 import mysql.connector
 import logging
 import itertools
+from collections import defaultdict
 
 # Set logging module
 logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
+
+# widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+#    ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
+# pbar = ProgressBar(widgets=widgets, maxval=len(scores_dict[db]))
+# pbar.start()
+# i = 0
+# i += 1
+# pbar.update(i)
+# pbar.finish()
 
 
 def extract_config():
@@ -140,18 +150,138 @@ def get_mirnas(config: dict, db_name: str):
     return results_set
 
 
-def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str):
+def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str, elem: str="GeneID"):
     connection = mysql_connection(config)
     if "Svmicro" in db_name:
-        query = "SELECT GeneID FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(db_name, mirna, order)
+        query = "SELECT {} FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(elem, db_name, mirna, order)
     else:
-        query = "SELECT GeneID FROM {} WHERE Mimat = {} ORDER BY Score {};".format(db_name, mirna, order)
+        query = "SELECT {} FROM {} WHERE Mimat = {} ORDER BY Score {};".format(elem, db_name, mirna, order)
     cursor = connection.cursor()
     cursor.execute(query)
 
-    results_list = list(itertools.chain.from_iterable(cursor))
+    results_list = [row[0] for row in cursor]
 
     connection.close()
 
     return results_list
 
+
+def get_validated_interactions(config: dict):
+    query = "SELECT Mimat, GeneID FROM Mirtarbase;"
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    result_dico = defaultdict(list)
+
+    for row in cursor:
+        result_dico[row[0]].append(row[1])
+
+    query = "SELECT Mimat, GeneID FROM Mirecords;"
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    for row in cursor:
+        result_dico[row[0]].append(row[1])
+
+    connection.close()
+
+    return result_dico
+
+def get_existing_mirabels():
+    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb FROM ExistingMirabel;"
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb"]
+
+    result_dico = defaultdict(list)
+    for row in cursor:
+        db_list = [v for i, v in enumerate(name_list) if row[i] == "1"]
+        result_dico[row[0]].extend(db_list)
+
+    connection.close()
+
+    results_list = []
+    for key, value in result_dico.items():
+        tmp_list = [key]
+        tmp_list.extend(value)
+        results_list.append(tmp_list)
+
+    return results_list
+
+def create_mirabel_table(db_name: str):
+    query = """CREATE TABLE IF NOT EXISTS {0}(
+            Id{0} INT UNSIGNED AUTO_INCREMENT,
+            Mimat int(11) NOT NULL,
+            GeneID int(11) NOT NULL,
+            Score FLOAT,
+            Validated ENUM("0", "1") DEFAULT "0",
+            PRIMARY KEY (Id{0}));""".format(db_name)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.close()
+
+def get_mirabel_metrics(db_name: str):
+    query = "SELECT * FROM {};".format(db_name)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    connection.close()
+
+    interaction_number = 0
+    mimat_list = []
+    gene_list = []
+    validated_number = 0
+    for row in rows:
+        interaction_number += 1
+        mimat_list.append(row[1])
+        gene_list.append(row[2])
+
+        if row[4] == '1':
+            validated_number += 1   
+
+    return interaction_number, len(list(set(mimat_list))), len(list(set(gene_list))), validated_number
+
+def insert_to_existing_mirabels(db_name: str, databases: list):
+    database_names = ", ".join(databases)
+    value_list = ", ".join(['"1"' for db in databases])
+    query = """REPLACE INTO ExistingMirabel (Name, {}) 
+            VALUES ('{}', {});""".format(database_names, db_name, value_list)
+    print(query)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.commit()
+    connection.close()
+
+def delete_table(db_name: str):
+    query = "DROP TABLE IF EXISTS {};".format(db_name)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor()
+    cursor.execute(query)
+    connection.commit()
+
+    query = "DELETE FROM ExistingMirabel WHERE Name = '{}';".format(db_name)
+    cursor.execute(query)
+    connection.commit()
+
+    connection.close()
+
+def get_common_mirnas(all_db: list):
+    config = extract_config()
+    logging.info("Getting all miRNAs between these databases: {}...".format(all_db))
+    db_mirs_lists = [get_mirnas(config, db) for db in all_db]
+
+    logging.info("Intersecting common miRNAs ...")
+    common_mirnas = list(set(db_mirs_lists[0]).intersection(*db_mirs_lists))
+
+    return common_mirnas

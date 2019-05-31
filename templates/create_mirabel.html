@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create miRabel</title>
+</head>
+<body>
+    <form action = "http://localhost:5000/create_mirabel" method = "POST" enctype = "multipart/form-data">
+    	<p>Select which databases to aggregate:</p>
+    	{% for each in db_list %}
+        	<input type="checkbox" name="database" value="{{each}}"> {{each}}<br>
+        {% endfor %}
+
+        <p>Name your new miRabel (ex: Mirabel_xxx):
+        <input type="text" name="db_name">
+        <input type = "submit" name = "submit_button" value = "Submit" /></p>
+
+    </form>
+</body>
+</html>

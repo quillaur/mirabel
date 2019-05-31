@@ -14,17 +14,11 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
     - ~~miRmap~~
     - ~~miRDB~~
     - ~~miRWalk~~
+    - MBSTAR
+    - exprtarget
 - ~~Aggregate newly updated data~~
+- ~~Add validated labels to all data upon update~~
 - Compare aggregated data to miRmap / MBStar and miRDB
-
-# How does it work
-1. Update public databases:
-    1. File URLs need to be specified in the config.
-    2. Each file is being downloaded, reformated and inserted in MYSQL.
-
-2. Aggregation: to be described...
-
-3. Statistical analysis: to be described...
 
 # How to work on it
 Pull your own branch
@@ -53,10 +47,23 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Run the databases update
+## Run the program
 ```shell
-python main.py -options
+sudo chmod +x scripts/aggregation.r
+sudo chmod +x scripts/rocker.r
+sudo chmod +x scripts/random_rocker.r
+sudo chmod +x scripts/precis_recall.r
+python flask_mirabel.py
 ```
 options:
 > * -d : download files from public database website. Default is False.
 > * -l or --list <db_name_1> <db_name_2> <db_name_x> : allows you to specify which databases to update. Default is all of them.
+
+# How does it work
+1. Update public databases:
+    1. File URLs need to be specified in the config.
+    2. Each file is being downloaded, reformated and inserted in MYSQL.
+
+2. Aggregation: to be described...
+
+3. Statistical analysis: to be described...
