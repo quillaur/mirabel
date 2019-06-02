@@ -45,7 +45,7 @@ class Updater:
         self.validated_interactions = utilities.get_validated_interactions(self.config)
 
         # File paths
-        if "Svmicro" in self.db_name:
+        if "Svmicro" in self.db_name or "Mbstar" in self.db_name:
             self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
             self.filenames = []
             with open(self.config[self.db_name.upper()]["URL_0"], "r") as my_txt:
@@ -75,7 +75,7 @@ class Updater:
         header = ""
         if "Mirmap" in self.db_name:
             separator = ","
-        elif "Comir" in self.db_name:
+        elif "Comir" in self.db_name or "Exprtarget" in self.db_name:
             separator = " "
         else:
             separator = "\t"
@@ -93,18 +93,23 @@ class Updater:
 
             parsed_data = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
 
-            if "Comir" in self.db_name:
+            if "Comir" in self.db_name or "Exprtarget" in self.db_name:
                 del parsed_data[0]
 
-            if len(parsed_data) > 1 and species in parsed_data[mir_col]:
+            if len(parsed_data) > 1 and (species in parsed_data[mir_col] or "MIMAT" in parsed_data[mir_col]):
                 to_insert_dict = {}
                 for key in header:
                     if key in self.config[self.db_name.upper()]:
                         to_insert_dict[self.config[self.db_name.upper()][key]] = parsed_data[header.index(key)]
 
-                if "Mirdb" in self.db_name:
+                if "Mirdb" in self.db_name or "Exprtarget" in self.db_name:
                     to_insert_dict["gene_symbol"] = None
-                    to_insert_dict["gene_id"] = int(to_insert_dict["gene_id"])
+                    try:
+                        to_insert_dict["gene_id"] = int(to_insert_dict["gene_id"])
+                    except Exception as e:
+                        self.unknown_genes.append(to_insert_dict["gene_id"])
+                        continue
+
                 elif "Mirwalk" in self.db_name:
                     to_insert_dict["gene_id"] = None
                     if "3UTR" in filename:
@@ -122,6 +127,8 @@ class Updater:
                 
                 if mir_name in self.mirna_dico:
                     to_insert_dict["Mimat"] = self.mirna_dico[mir_name]
+                elif "MIMAT" in mir_name:
+                    to_insert_dict["Mimat"] = int(mir_name.replace("MIMAT", ""))
                 else:
                     self.unknown_mirs.append(mir_name)
                     continue
@@ -149,7 +156,7 @@ class Updater:
         :return: None
         """
         predictions_list = []
-        if "Svmicro" in self.db_name:
+        if "Svmicro" in self.db_name or "Mbstar" in self.db_name:
             with open(filename, "r") as my_file:
                 for insert_dict in self.parse_svmicro_line(file=my_file, filename=filename):
                     predictions_list.append(insert_dict)
@@ -159,7 +166,7 @@ class Updater:
 
                 self.insert_into_db(predictions_list)
 
-        elif "Comir" in self.db_name:
+        elif "Comir" in self.db_name or "Exprtarget" in self.db_name:
             my_path = self.config[self.db_name.upper()]["SAVE FILE TO"]
             comir_files = [os.path.join(my_path, f) for f in os.listdir(my_path) if os.path.isfile(os.path.join(my_path, f))]
             for file in comir_files:
@@ -298,6 +305,11 @@ class Updater:
         """
         for line in file:
             data = line.replace("\n", "").split("\t")
+
+            if len(data) == 1:
+                data = line.replace("\n", "").replace('"', '').split(" ")
+                del data[0]
+
             mir_name = filename.split("/")[-1].replace(".txt", "")
             if len(data) > 1:
                 if data[0] in self.gene_dico:

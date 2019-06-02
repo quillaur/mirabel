@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # db_name must start with a capitalized letter followed by non-capitalized letters
     # (same as the corresponding SQL tables).
     # By default, all databases are used.
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget"]
 
     # Check database requested by user is available:
     is_in_list = True
@@ -73,15 +73,5 @@ if __name__ == '__main__':
 
             logging.info("{} / {} Database(s) done !\n".format(db_list.index(db) + 1, len(db_list)))
 
-    # Aggregate common miRna predictions with R RobustRankAggreg
-    # aggregator = Aggregator(db_list)
-    # aggregator.run()
-
-    # Statistical analysis
-    if args.list_compare:
-        db_list = ["Mirabel"]
-        rocker = Rocker(db_list, args.list_compare)
-        rocker.run()
-        
     logging.info("Run completed.")
     logging.info("Execution time: {}".format(datetime.now() - startTime))
