@@ -61,7 +61,7 @@ def create_mirabel():
 
             return redirect(url_for("aggregate_results", db_name = db_name, databases = databases))
 
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget"]
     return render_template("create_mirabel.html", db_list = db_list)
 
 @app.route('/aggregate_results/<db_name>/<databases>', methods=["GET", "POST"])
@@ -82,7 +82,7 @@ def aggregate_results(db_name, databases):
 
 @app.route('/compare_performances', methods=["GET", "POST"])
 def compare_performances():
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget"]
     # existing_mirabels is a list of lists
     mirabels = utilities.get_existing_mirabels()
 

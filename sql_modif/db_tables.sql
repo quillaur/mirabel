@@ -98,6 +98,24 @@ CREATE TABLE IF NOT EXISTS Mirabel(
 	PRIMARY KEY (IdMirabel)
 );
 
+CREATE TABLE IF NOT EXISTS Mbstar(
+    IdMbstar INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
+	PRIMARY KEY (IdMbstar)
+);
+
+CREATE TABLE IF NOT EXISTS Exprtarget(
+    IdExprtarget INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
+	PRIMARY KEY (IdExprtarget)
+);
+
 CREATE TABLE IF NOT EXISTS ExistingMirabel(
     Name VARCHAR(50) NOT NULL UNIQUE,
 	Targetscan ENUM("0", "1") DEFAULT "0",
