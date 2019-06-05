@@ -133,6 +133,8 @@ def performances_results(db_name, db_comp):
         img_list.append(os.path.join(crop_perm_img_dir, "{}_{}_f_score.jpg".format(db_name, db_compared)))
 
     auc_stats = []
+    auc_stats.append("##################################")
+    auc_stats.append("##### RESULTS ON ALL COMMON DATA ######")
     auc_res = {}
     p_auc_res = {}
     pr_auc_res = {}
@@ -189,29 +191,48 @@ def performances_results(db_name, db_comp):
         else:
             print("File NOT found: {} ".format(stats_file))
 
-        auc_stats.append("{} VS {}:".format(db_name, db))
+        auc_stats.append("##################################")
+        auc_stats.append("####### {} VS {} #######".format(db_name, db))
+        auc_stats.append("##################################")
         auc_stats.append("ROC_AUC: {} {}".format(auc_res[db_name], auc_res[db]))
+        auc_stats.append("----------------------------------")
         auc_stats.append("ROC_pAUC: {} {}".format(p_auc_res[db_name], p_auc_res[db]))
+        auc_stats.append("----------------------------------")
         auc_stats.append("PR_AUC: {} {}".format(pr_auc_res[db_name], pr_auc_res[db]))
+        auc_stats.append("----------------------------------")
         auc_stats.append("F_scores:")
-        auc_stats.append("    10%: {} {}".format(f_score_res[db_name][10], f_score_res[db][10]))
-        auc_stats.append("    20%: {} {}".format(f_score_res[db_name][20], f_score_res[db][20]))
-        auc_stats.append("    40%: {} {}".format(f_score_res[db_name][40], f_score_res[db][40]))
-        auc_stats.append("    100%: {} {}".format(f_score_res[db_name][100], f_score_res[db][100]))
+        auc_stats.append("\t - 10%: {} {}".format(f_score_res[db_name][10], f_score_res[db][10]))
+        auc_stats.append("\t - 20%: {} {}".format(f_score_res[db_name][20], f_score_res[db][20]))
+        auc_stats.append("\t - 40%: {} {}".format(f_score_res[db_name][40], f_score_res[db][40]))
+        auc_stats.append("\t - 100%: {} {}".format(f_score_res[db_name][100], f_score_res[db][100]))
 
     # Get statistics
+    auc_stats.append("##################################")
+    auc_stats.append("###### STATSTICS ON RANDOM SETS #######")
     db_results = {
         db_name: {
             "roc_auc": "",
             "sem_auc": "",
-            "p_val": ""
+            "p_val": "",
+            "specificity": "",
+            "sem_spe": "",
+            "p_val_spe": "",
+            "sensibility": "",
+            "sem_sensi": "",
+            "p_val_sen": ""
         }
     }
     for db in db_comp:
         db_results[db] = {
             "roc_auc": "",
             "sem_auc": "",
-            "p_val": ""
+            "p_val": "",
+            "specificity": "",
+            "sem_spe": "",
+            "p_val_spe": "",
+            "sensibility": "",
+            "sem_sensi": "",
+            "p_val_sen": ""
         }
         stats_file = os.path.join(perm_data_dir, "{}_{}_stats_results.txt".format(db_name, db))
         if os.path.isfile(stats_file):
@@ -234,14 +255,49 @@ def performances_results(db_name, db_comp):
                             except:
                                 db_results[db_name]["p_val"] = float(line.split("p-value < ")[1])
                                 db_results[db]["p_val"] = float(line.split("p-value < ")[1])
-                                
-        auc_stats.append("\n#################")
-        auc_stats.append("STATSTICS")
-        auc_stats.append("#################\n")
-        auc_stats.append("{} VS {}:".format(db_name, db))
+                    elif 50 < i < 75:
+                        if "Mean" in line:
+                            db_results[db_name]["specificity"] = round(float(line.split(" ")[2]), 3)
+                            db_results[db]["specificity"] = round(float(line.split(" ")[3]), 3)
+                        elif "SEM" in line:
+                            db_results[db_name]["sem_spe"] = round(float(line.split(" ")[2]), 4)
+                            db_results[db]["sem_spe"] = round(float(line.split(" ")[3].replace('"', '')), 4)
+                        elif "p-value" in line:
+                            try:
+                                db_results[db_name]["p_val_spe"] = float(line.split("p-value = ")[1])
+                                db_results[db]["p_val_spe"] = float(line.split("p-value = ")[1])
+                            except:
+                                db_results[db_name]["p_val_spe"] = float(line.split("p-value < ")[1])
+                                db_results[db]["p_val_spe"] = float(line.split("p-value < ")[1])
+                    elif i > 75:
+                        if "Mean" in line:
+                            db_results[db_name]["sensibility"] = round(float(line.split(" ")[2]), 3)
+                            db_results[db]["sensibility"] = round(float(line.split(" ")[3]), 3)
+                        elif "SEM" in line:
+                            db_results[db_name]["sem_sensi"] = round(float(line.split(" ")[2]), 4)
+                            db_results[db]["sem_sensi"] = round(float(line.split(" ")[3].replace('"', '')), 4)
+                        elif "p-value" in line:
+                            try:
+                                db_results[db_name]["p_val_sen"] = float(line.split("p-value = ")[1])
+                                db_results[db]["p_val_sen"] = float(line.split("p-value = ")[1])
+                            except:
+                                db_results[db_name]["p_val_sen"] = float(line.split("p-value < ")[1])
+                                db_results[db]["p_val_sen"] = float(line.split("p-value < ")[1])
+
+        auc_stats.append("##################################")
+        auc_stats.append("####### {} VS {} #######".format(db_name, db))
+        auc_stats.append("##################################")
         auc_stats.append("Mean AUC: {} {}".format(db_results[db_name]["roc_auc"], db_results[db]["roc_auc"]))
         auc_stats.append("SEM: {} {}".format(db_results[db_name]["sem_auc"], db_results[db]["sem_auc"]))
         auc_stats.append("p-value: {}".format(db_results[db_name]["p_val"]))
+        auc_stats.append("----------------------------------")
+        auc_stats.append("Mean specificity: {} {}".format(db_results[db_name]["specificity"], db_results[db]["specificity"]))
+        auc_stats.append("SEM: {} {}".format(db_results[db_name]["sem_spe"], db_results[db]["sem_spe"]))
+        auc_stats.append("p-value: {}".format(db_results[db_name]["p_val_spe"]))
+        auc_stats.append("----------------------------------")
+        auc_stats.append("Mean sensibility: {} {}".format(db_results[db_name]["sensibility"], db_results[db]["sensibility"]))
+        auc_stats.append("SEM: {} {}".format(db_results[db_name]["sem_sensi"], db_results[db]["sem_sensi"]))
+        auc_stats.append("p-value: {}".format(db_results[db_name]["p_val_sen"]))
 
     return render_template("performances_results.html", img_list = img_list, auc_stats = auc_stats)
     
