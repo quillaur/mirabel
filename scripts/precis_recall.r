@@ -42,35 +42,7 @@ for (file in tmp_files_list)
 	print(file)
 	res0 = read.table(file, header = TRUE, sep = ";")
 
-	if (db_name %in% decreasing) 
-	{
-		res0 = res0[order(res0$score, decreasing = TRUE),]
-	} 
-	else 
-	{
-		res0 = res0[order(res0$score, decreasing = FALSE),]
-	}
-
-	pr_df = data.frame(val_number = res0[1,2])
-	pr_df$precision = sum(res0[1,2])
-	pr_df$recall = 0
-	pr_df$f_score = 0
-
-	for (x in 2:nrow(res0))
-	{
-		pr_df[x,1] = sum(res0[1:x,2])
-		pr_df[x,2] = pr_df[x,1] / x
-		pr_df[x,3] = pr_df[x,1] / sum(res0[,2])
-
-		if(pr_df[x,3] > 0)
-		{
-			pr_df[x,4] = 2*((pr_df[x,2] * pr_df[x,3])/(pr_df[x,2] + pr_df[x,3]))
-		}
-		else
-	    {
-	        pr_df[x,4] = 0
-	    }
-	}
+	pr_df = data.frame(precision = res0$precision, recall = res0$recall, f_score = res0$f_score)
 
 	tmp_f_score = data.frame(res0 = pr_df$f_score)
 	f_score_df = cbind.fill(f_score_df, tmp_f_score, fill = NA)

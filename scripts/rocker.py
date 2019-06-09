@@ -12,6 +12,7 @@ from progressbar import *
 from collections import defaultdict
 import random
 from shutil import copyfile
+from operator import itemgetter
 
 # Personal imports
 from scripts import utilities
@@ -51,14 +52,13 @@ class Rocker:
 
         return common_mirnas
 
-    def write_tmp_roc_data_to_file(self, filename: str, scores_dict: dict):
+    def write_tmp_roc_data_to_file(self, filename: str, interactions: list):
         # Write results temporary in CSV so as to be aggregated with R
         with open(filename, "w") as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=";")
-            csv_writer.writerow(["score", "label"])
-            for mimat in scores_dict:
-                for gene_id in scores_dict[mimat]:
-                    csv_writer.writerow([scores_dict[mimat][gene_id]["Score"], scores_dict[mimat][gene_id]["Validated"]])
+            csv_writer.writerow(["score", "label", "precision", "recall", "f_score"])
+            for interaction in interactions:
+                csv_writer.writerow(interaction)
 
     def make_rocs(self):
         subprocess.call("scripts/rocker.r")
@@ -105,11 +105,50 @@ class Rocker:
                         c += 1
 
             sub += 1
+
+            # Sort by score write results to file
+            lol_interactions = self.sort_by_score(sub_dict[db_name])
+            # compute precision / recall / f-score
+            lol_interactions = self.compute_precision_recall(lol_interactions)
+            # Write results to file
             filename = os.path.join(self.config["FILES"]["TMP_RANDOM_SETS"], "{}_tmp_random_set_{}.txt".format(db_name, sub))
-            self.write_tmp_roc_data_to_file(filename, sub_dict[db_name])
+            self.write_tmp_roc_data_to_file(filename, lol_interactions)
             filenames.append(filename)
 
         return filenames
+
+    def compute_precision_recall(self, interactions: list):
+        # Calculate precision for each interaction
+        validated_sum = []
+        for interaction in interactions:
+            validated_sum.append(interaction[1])
+            interaction.append(sum(validated_sum)/len(validated_sum))
+
+        # Compute recall for each interaction
+        total_validated = sum(validated_sum)
+        for indice, interaction in enumerate(interactions):
+            interaction.append(sum(validated_sum[:indice+1])/total_validated)
+
+            # Compute f_score
+            if interaction[3] > 0:
+                f_score = 2 * ((interaction[2] * interaction[3]) / (interaction[2] + interaction[3]))
+                interaction.append(f_score)
+            else:
+                interaction.append(0)
+
+        return interactions
+
+    def sort_by_score(self, scores_dict: dict):
+        # Make a list of tuples from given interactions
+        lol_interactions = []
+        for mimat in scores_dict:
+            for gene_id in scores_dict[mimat]:
+                lol_interactions.append([float(scores_dict[mimat][gene_id]["Score"]), int(scores_dict[mimat][gene_id]["Validated"])])
+
+        # Sort results by score
+        lol_interactions = sorted(lol_interactions, key=itemgetter(0))
+
+        return lol_interactions
 
     def run(self):
         # Check if dir exists
@@ -146,7 +185,7 @@ class Rocker:
             reformated_scores_dict = {self.db_main: defaultdict(dict)}
             count = 0
             count_val = 0
-            for mimat in common_mirnas[:5]:
+            for mimat in common_mirnas:
                 # For each gene in the db
                 for gene_id in scores_dict[self.db_main][mimat]:
                     add_in = True
@@ -166,12 +205,17 @@ class Rocker:
                         if scores_dict[self.db_main][mimat][gene_id]["Validated"] == '1':
                             count_val += 1
 
+            # Sort by score write results to file
+            lol_interactions = self.sort_by_score(reformated_scores_dict[self.db_main])
+            # compute precision / recall / f-score
+            lol_interactions = self.compute_precision_recall(lol_interactions)
+            # write results to file
             logging.info("{} common interactions found for {}.".format(count, self.all_db))
             logging.info("Within these common interactions, {} are validated ones.".format(count_val))
             logging.info("Writing scores and labels for {}...".format(self.db_main))
             filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(self.db_main))
             # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(self.db_main))
-            self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[self.db_main])
+            self.write_tmp_roc_data_to_file(filename, lol_interactions)
             # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[self.db_main])
 
             filenames = self.make_sub_datasets(common_mirnas, reformated_scores_dict, self.db_main)
@@ -181,17 +225,22 @@ class Rocker:
             for db in self.db_comp:
                 # For each mirna in the db
                 reformated_scores_dict[db] = defaultdict(dict)
-                for mimat in common_mirnas[:5]:
+                for mimat in common_mirnas:
                     for gene_id in common_genes[mimat]:
                         reformated_scores_dict[db][mimat][gene_id] = {
                                         "Score": scores_dict[db][mimat][gene_id]["Score"],
                                         "Validated": scores_dict[db][mimat][gene_id]["Validated"]
                                     }
-            
+                
+                # Sort by score write results to file
+                lol_interactions = self.sort_by_score(reformated_scores_dict[db])
+                # compute precision / recall / f-score
+                lol_interactions = self.compute_precision_recall(lol_interactions)
+                # write results to file
                 logging.info("Writing scores and labels for {}...".format(db))
                 filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
                 # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(db))
-                self.write_tmp_roc_data_to_file(filename, reformated_scores_dict[db])
+                self.write_tmp_roc_data_to_file(filename, lol_interactions)
                 # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[db])
 
                 filenames_1 = self.make_sub_datasets(common_mirnas, reformated_scores_dict, db)

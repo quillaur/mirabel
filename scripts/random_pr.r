@@ -94,9 +94,12 @@ for (i in 1:10) {
 	# print(head(res1))
 
 	# Precision versus Recall
-	pr_df_0 = compute_pr(res0)
+	# pr_df_0 = compute_pr(res0)
+	pr_df_0 = data.frame(precision = res0$precision, recall = res0$recall, f_score = res0$f_score)
 	auc.pr_df_0 = auc(pr_df_0$recall, pr_df_0$precision)
-	pr_df_1 = compute_pr(res1)
+
+	# pr_df_1 = compute_pr(res1)
+	pr_df_1 = data.frame(precision = res1$precision, recall = res1$recall, f_score = res1$f_score)
 	auc.pr_df_1 = auc(pr_df_1$recall, pr_df_1$precision)
 	AUC = data.frame(res0=auc.pr_df_0, res1=auc.pr_df_1, stringsAsFactors=FALSE)
 	all_pr_auc = rbind(all_pr_auc, AUC)
