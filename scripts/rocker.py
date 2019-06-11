@@ -13,6 +13,7 @@ from collections import defaultdict
 import random
 from shutil import copyfile
 from operator import itemgetter
+from progressbar import ProgressBar
 
 # Personal imports
 from scripts import utilities
@@ -119,15 +120,40 @@ class Rocker:
 
     def compute_precision_recall(self, interactions: list):
         # Calculate precision for each interaction
-        validated_sum = []
-        for interaction in interactions:
-            validated_sum.append(interaction[1])
-            interaction.append(sum(validated_sum)/len(validated_sum))
+        logging.info("Compute precision...")
+        widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+           ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
+        pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
+        pbar.start()
+        i = 0
+           
+        count_val = 0
+        for indice, interaction in enumerate(interactions):
+            if interaction[1] == 1:
+                count_val += 1
+
+            # Precision
+            precision = count_val/(indice+1)
+            interaction.append(precision)
+            
+            i += 1
+            pbar.update(i)
+        pbar.finish()
 
         # Compute recall for each interaction
-        total_validated = sum(validated_sum)
+        logging.info("Compute recall and f-score...")
+        pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
+        pbar.start()
+        i = 0
+
+        count_val_2 = 0
         for indice, interaction in enumerate(interactions):
-            interaction.append(sum(validated_sum[:indice+1])/total_validated)
+            if interaction[1] == 1:
+                count_val_2 += 1
+            
+            # Recall
+            recall = count_val_2 / count_val
+            interaction.append(recall)
 
             # Compute f_score
             if interaction[3] > 0:
@@ -136,15 +162,25 @@ class Rocker:
             else:
                 interaction.append(0)
 
+            i += 1
+            pbar.update(i)
+        pbar.finish()
+
         return interactions
 
     def sort_by_score(self, scores_dict: dict):
         # Make a list of tuples from given interactions
         lol_interactions = []
+        # Limit to 1M interactions because of computer resources (on PR AUC calculation)
+        count = 0
         for mimat in scores_dict:
             for gene_id in scores_dict[mimat]:
                 lol_interactions.append([float(scores_dict[mimat][gene_id]["Score"]), int(scores_dict[mimat][gene_id]["Validated"])])
+                count += 1
 
+                if count > 1000000:
+                    break
+                    
         # Sort results by score
         lol_interactions = sorted(lol_interactions, key=itemgetter(0))
 
@@ -206,12 +242,15 @@ class Rocker:
                             count_val += 1
 
             # Sort by score write results to file
+            logging.info("{} common interactions found for {}.".format(count, self.all_db))
+            if count > 1000000:
+                logging.warning("Due to resource limitations, only the first 1M interactions will be used for comparison.")
+            logging.info("Within these common interactions, {} are validated ones.".format(count_val))
+            logging.info("Sort interactions by score...")
             lol_interactions = self.sort_by_score(reformated_scores_dict[self.db_main])
             # compute precision / recall / f-score
             lol_interactions = self.compute_precision_recall(lol_interactions)
             # write results to file
-            logging.info("{} common interactions found for {}.".format(count, self.all_db))
-            logging.info("Within these common interactions, {} are validated ones.".format(count_val))
             logging.info("Writing scores and labels for {}...".format(self.db_main))
             filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(self.db_main))
             # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(self.db_main))
@@ -272,15 +311,15 @@ class Rocker:
                         logging.error("File NOT found: {}".format(src))
 
                 # Remove files so as not to create issue with the next comparison
-                for filename in filenames_1:
-                    if os.path.isfile(filename):
-                        os.remove(filename)
+                # for filename in filenames_1:
+                #     if os.path.isfile(filename):
+                #         os.remove(filename)
 
             logging.info("Rock analysis done.")
 
-            for filename in filenames:
-                if os.path.isfile(filename):
-                    os.remove(filename)
+            # for filename in filenames:
+            #     if os.path.isfile(filename):
+            #         os.remove(filename)
 
             return True
         return False

@@ -41,13 +41,13 @@ for (file in tmp_files_list)
 	db_name = gsub("_tmp_roc_data.txt","", db)
 	print(file)
 	res0 = read.table(file, header = TRUE, sep = ";")
-
+	
 	pr_df = data.frame(precision = res0$precision, recall = res0$recall, f_score = res0$f_score)
 
 	tmp_f_score = data.frame(res0 = pr_df$f_score)
 	f_score_df = cbind.fill(f_score_df, tmp_f_score, fill = NA)
 	names(f_score_df)[names(f_score_df)=="res0"] = db_name
-
+	
     if (db_number > 1) {
 		par(fig = c(0,1,0,1), new = TRUE)
 		plot(x = pr_df$recall, y = pr_df$precision, type="l", col= colors[db_number], xlim = c(0, 1), ylim = c(0, 1), xlab="Recall", ylab="Precision")

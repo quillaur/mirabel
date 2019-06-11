@@ -160,11 +160,13 @@ def performances_results(db_name, db_comp):
                 lines = handle.split("\n")
                 for i, line in enumerate(lines):
                     if i == 1:
-                        auc_res[db_name] = round(float(line.split(" ")[3]), 3)
-                        auc_res[db] = round(float(line.split(" ")[4]), 3)
+                        line_elems = [x for x in line.split(" ") if x != ""]
+                        auc_res[db_name] = round(float(line_elems[1]), 3)
+                        auc_res[db] = round(float(line_elems[2]), 3)
                     elif i == 3:
-                        p_auc_res[db_name] = round(float(line.split(" ")[1]), 3)
-                        p_auc_res[db] = round(float(line.split(" ")[2]), 3)
+                        line_elems = [x for x in line.split(" ") if x != ""]
+                        p_auc_res[db_name] = round(float(line_elems[1]), 3)
+                        p_auc_res[db] = round(float(line_elems[2]), 3)
 
         stats_file = os.path.join(perm_data_dir, "{}_{}_pr_results.txt".format(db_name, db))
         f_score_res[db] = {
@@ -179,8 +181,9 @@ def performances_results(db_name, db_comp):
                 lines = handle.split("\n")
                 for i, line in enumerate(lines):
                     if i == 1:
-                        pr_auc_res[db_name] = round(float(line.split(" ")[3]), 3)
-                        pr_auc_res[db] = round(float(line.split(" ")[4]), 3)
+                        line_elems = [x for x in line.split(" ") if x != ""]
+                        pr_auc_res[db_name] = round(float(line_elems[1]), 3)
+                        pr_auc_res[db] = round(float(line_elems[2]), 3)
                     elif i > 9:
                         possibilities = [item for item in line.split(" ") if item != ""]
                         if possibilities:
