@@ -1,6 +1,18 @@
 #! /usr/bin/Rscript
-library("methods")
-library(RobustRankAggreg)
+InsPack = function(pack) 
+{ 
+	if (!pack %in% installed.packages()) 
+	{ 
+		print(paste("installing",pack)) 
+		install.packages(pack)
+	} 
+	else
+	{
+		print(paste(pack," already installed"))
+	}
+} 
+InsPack("RobustRankAggreg")
+library("RobustRankAggreg")
 
 data = read.csv("/home/quillaur/github_projects/mirabel/resources/tmp_predictions_lists.csv", header = TRUE, sep = ";")
 headers = colnames(data, do.NULL = TRUE, prefix = "col")

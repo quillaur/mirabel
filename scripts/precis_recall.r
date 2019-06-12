@@ -1,4 +1,21 @@
 #! /usr/bin/Rscript
+
+InsPack = function(pack) 
+{ 
+	if (!pack %in% installed.packages()) 
+	{ 
+		print(paste("installing",pack)) 
+		install.packages(pack)
+	} 
+	else
+	{
+		print(paste(pack," already installed"))
+	}
+} 
+
+InsPack("flux")
+InsPack("rowr")
+
 library("flux")
 library("rowr")
 

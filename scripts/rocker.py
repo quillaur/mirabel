@@ -121,11 +121,11 @@ class Rocker:
     def compute_precision_recall(self, interactions: list):
         # Calculate precision for each interaction
         logging.info("Compute precision...")
-        widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
-           ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
-        pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
-        pbar.start()
-        i = 0
+        # widgets = ['Data processing: ', Percentage(), ' ', Bar(marker='0',left='[',right=']'),
+        #    ' ', ETA(), ' ', FileTransferSpeed()] #see docs for other options
+        # pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
+        # pbar.start()
+        # i = 0
            
         count_val = 0
         for indice, interaction in enumerate(interactions):
@@ -136,15 +136,15 @@ class Rocker:
             precision = count_val/(indice+1)
             interaction.append(precision)
             
-            i += 1
-            pbar.update(i)
-        pbar.finish()
-
+        #     i += 1
+        #     pbar.update(i)
+        # pbar.finish()
+        print("Count val:{}".format(count_val))
         # Compute recall for each interaction
         logging.info("Compute recall and f-score...")
-        pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
-        pbar.start()
-        i = 0
+        # pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
+        # pbar.start()
+        # i = 0
 
         count_val_2 = 0
         for indice, interaction in enumerate(interactions):
@@ -162,27 +162,24 @@ class Rocker:
             else:
                 interaction.append(0)
 
-            i += 1
-            pbar.update(i)
-        pbar.finish()
+        #     i += 1
+        #     pbar.update(i)
+        # pbar.finish()
 
         return interactions
 
     def sort_by_score(self, scores_dict: dict):
         # Make a list of tuples from given interactions
         lol_interactions = []
-        # Limit to 1M interactions because of computer resources (on PR AUC calculation)
-        count = 0
         for mimat in scores_dict:
             for gene_id in scores_dict[mimat]:
                 lol_interactions.append([float(scores_dict[mimat][gene_id]["Score"]), int(scores_dict[mimat][gene_id]["Validated"])])
-                count += 1
-
-                if count > 1000000:
-                    break
                     
         # Sort results by score
         lol_interactions = sorted(lol_interactions, key=itemgetter(0))
+
+        # Limit to 1M interactions because of computer resources (on PR AUC calculation)
+        lol_interactions = lol_interactions[:1000000]
 
         return lol_interactions
 
@@ -221,7 +218,7 @@ class Rocker:
             reformated_scores_dict = {self.db_main: defaultdict(dict)}
             count = 0
             count_val = 0
-            for mimat in common_mirnas:
+            for mimat in common_mirnas[:5]:
                 # For each gene in the db
                 for gene_id in scores_dict[self.db_main][mimat]:
                     add_in = True
@@ -243,9 +240,9 @@ class Rocker:
 
             # Sort by score write results to file
             logging.info("{} common interactions found for {}.".format(count, self.all_db))
+            logging.info("Within these common interactions, {} are validated ones.".format(count_val))
             if count > 1000000:
                 logging.warning("Due to resource limitations, only the first 1M interactions will be used for comparison.")
-            logging.info("Within these common interactions, {} are validated ones.".format(count_val))
             logging.info("Sort interactions by score...")
             lol_interactions = self.sort_by_score(reformated_scores_dict[self.db_main])
             # compute precision / recall / f-score
@@ -264,7 +261,7 @@ class Rocker:
             for db in self.db_comp:
                 # For each mirna in the db
                 reformated_scores_dict[db] = defaultdict(dict)
-                for mimat in common_mirnas:
+                for mimat in common_mirnas[:5]:
                     for gene_id in common_genes[mimat]:
                         reformated_scores_dict[db][mimat][gene_id] = {
                                         "Score": scores_dict[db][mimat][gene_id]["Score"],
@@ -311,15 +308,15 @@ class Rocker:
                         logging.error("File NOT found: {}".format(src))
 
                 # Remove files so as not to create issue with the next comparison
-                # for filename in filenames_1:
-                #     if os.path.isfile(filename):
-                #         os.remove(filename)
+                for filename in filenames_1:
+                    if os.path.isfile(filename):
+                        os.remove(filename)
 
             logging.info("Rock analysis done.")
 
-            # for filename in filenames:
-            #     if os.path.isfile(filename):
-            #         os.remove(filename)
+            for filename in filenames:
+                if os.path.isfile(filename):
+                    os.remove(filename)
 
             return True
         return False
