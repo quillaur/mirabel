@@ -8,6 +8,7 @@ import subprocess
 import csv
 from ast import literal_eval
 from progressbar import *
+import os
 
 # Personal imports
 from scripts import utilities
@@ -111,6 +112,13 @@ class Aggregator:
     def run(self, db_name):
         # Truncate Mirabel table
         utilities.truncate_table(self.config, db_name)
+
+        # Create resources directory if it does not already exists
+        if not os.path.isdir(self.config["FILES"]["RESOURCES"]):
+            os.makedirs(self.config["FILES"]["TMP_ROC_DATA"])
+            os.makedirs(self.config["FILES"]["TMP_RANDOM_SETS"])
+            os.makedirs(self.config["FILES"]["PERM_COMPARISONS"])
+            os.makedirs(self.config["FILES"]["PERM_IMAGES"])
 
         # Get common mirnas between all aggregated DB
         all_mirnas = self.get_mirnas_for_each_db()
