@@ -89,6 +89,9 @@ def compare_performances():
     for mirabel in mirabels:
         db_list.append(mirabel[0])
 
+    # Get existing comparisons
+    comparisons = get_existing_comparisons()
+
     if request.method == "POST":
         if request.form["submit_button"] == "Return to perf comparisons":
             return render_template("compare_performances.html", db_list = db_list)
@@ -118,7 +121,15 @@ def compare_performances():
                 print("WARNING: No common interaction between {} and {}!".format(db_main, db_comp))
                 return render_template("performances_failed.html")
 
-    return render_template("compare_performances.html", db_list = db_list)
+        elif request.form["submit_button"] == "View":
+            comparison = request.form.get("comparisons")
+            db_list = comparison.split(" vs ")
+            db_main = db_list[0]
+            db_comp = db_list[1].split(" and ")
+
+            return redirect(url_for("performances_results", db_name = db_main, db_comp = db_comp))
+
+    return render_template("compare_performances.html", db_list = db_list, comparisons = comparisons)
 
 @app.route('/performances_results/<db_name>/<db_comp>', methods=["GET", "POST"])
 def performances_results(db_name, db_comp):
@@ -325,6 +336,18 @@ def clean_tmp_roc_data(mypath):
         if os.path.isfile(file):
             os.remove(file)
 
+
+def get_existing_comparisons():
+    directories_list = [directory for root, directories, files in os.walk("resources/already_done_comparisons") for directory in directories]
+    comparisons = []
+    for directory in directories_list:
+        db_list = directory.split("_vs_")
+        db_compared = db_list[1].split("_")
+        if len(db_compared) > 1:
+            db_compared = " and ".join(db_compared)
+        comparisons.append("{} vs {}".format(db_list[0], db_compared))
+
+    return comparisons
 
 if __name__ == '__main__':
     app.run(debug=True)

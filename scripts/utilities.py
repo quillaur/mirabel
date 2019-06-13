@@ -189,13 +189,13 @@ def get_validated_interactions(config: dict):
     return result_dico
 
 def get_existing_mirabels():
-    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb FROM ExistingMirabel;"
+    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb, Mbstar, Exprtarget FROM ExistingMirabel;"
     config = extract_config()
     connection = mysql_connection(config)
     cursor = connection.cursor()
     cursor.execute(query)
 
-    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb"]
+    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb", "Mbstar", "Exprtarget"]
 
     result_dico = defaultdict(list)
     for row in cursor:
@@ -254,7 +254,6 @@ def insert_to_existing_mirabels(db_name: str, databases: list):
     value_list = ", ".join(['"1"' for db in databases])
     query = """REPLACE INTO ExistingMirabel (Name, {}) 
             VALUES ('{}', {});""".format(database_names, db_name, value_list)
-    print(query)
     config = extract_config()
     connection = mysql_connection(config)
     cursor = connection.cursor()

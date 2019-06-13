@@ -139,7 +139,7 @@ class Rocker:
         #     i += 1
         #     pbar.update(i)
         # pbar.finish()
-        print("Count val:{}".format(count_val))
+
         # Compute recall for each interaction
         logging.info("Compute recall and f-score...")
         # pbar = ProgressBar(widgets=widgets, maxval=len(interactions))
@@ -254,6 +254,7 @@ class Rocker:
             self.write_tmp_roc_data_to_file(filename, lol_interactions)
             # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[self.db_main])
 
+            logging.info("Making random sub-sets for {}...".format(self.db_main))
             filenames = self.make_sub_datasets(common_mirnas, reformated_scores_dict, self.db_main)
             filenames.append(filename)
 
@@ -279,6 +280,7 @@ class Rocker:
                 self.write_tmp_roc_data_to_file(filename, lol_interactions)
                 # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[db])
 
+                logging.info("Making random sub-sets for {}...".format(db))
                 filenames_1 = self.make_sub_datasets(common_mirnas, reformated_scores_dict, db)
                 filenames_1.append(filename)
                 
