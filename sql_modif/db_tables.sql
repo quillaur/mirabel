@@ -127,3 +127,6 @@ CREATE TABLE IF NOT EXISTS ExistingMirabel(
 	Mirdb ENUM("0", "1") DEFAULT "0",
 	Mirwalk ENUM("0", "1") DEFAULT "0"
 );
+
+alter table ExistingMirabel add Mbstar ENUM("0", "1") DEFAULT "0";
+alter table ExistingMirabel add Exprtarget ENUM("0", "1") DEFAULT "0";
