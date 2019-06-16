@@ -218,7 +218,7 @@ class Rocker:
             reformated_scores_dict = {self.db_main: defaultdict(dict)}
             count = 0
             count_val = 0
-            for mimat in common_mirnas:
+            for mimat in common_mirnas[:5]:
                 # For each gene in the db
                 for gene_id in scores_dict[self.db_main][mimat]:
                     add_in = True
@@ -262,7 +262,7 @@ class Rocker:
             for db in self.db_comp:
                 # For each mirna in the db
                 reformated_scores_dict[db] = defaultdict(dict)
-                for mimat in common_mirnas:
+                for mimat in common_mirnas[:5]:
                     for gene_id in common_genes[mimat]:
                         reformated_scores_dict[db][mimat][gene_id] = {
                                         "Score": scores_dict[db][mimat][gene_id]["Score"],
