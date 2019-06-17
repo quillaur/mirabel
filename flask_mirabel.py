@@ -106,7 +106,7 @@ def compare_performances():
         if request.form["submit_button"] == "Return to perf comparisons":
             return render_template("compare_performances.html", db_list = db_list)
 
-        if request.form["submit_button"] == "Submit":
+        if request.form["submit_button"] == "One by one":
             db_main = request.form.get("miRabel")
             db_comp = request.form.getlist("compare")
 
@@ -121,7 +121,7 @@ def compare_performances():
                     os.remove(file)
 
             # Make ROC analysis
-            rocker = Rocker(db_main, db_comp)
+            rocker = Rocker(db_main, db_comp, False)
             success = rocker.run()
 
             # Print results only for successful analysis

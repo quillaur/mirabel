@@ -13,12 +13,13 @@
             {% endfor %}
         </select>
 
-        <p>Select which database to compare it with:</p>
+        <p>Select which database(s) to compare it with:</p>
         {% for each in db_list %}
             <input type="checkbox" name="compare" value="{{each}}"> {{each}}<br>
         {% endfor %}
 
-        <input type = "submit" name = "submit_button" value = "Submit" /></p>
+        <input type = "submit" name = "submit_button" value = "One by one" />
+        <input type = "submit" name = "submit_button" value = "All in one" /></p>
 
         <h2>Already available comparisons</h2>
             {% for each in comparisons %}
