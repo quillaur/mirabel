@@ -23,7 +23,7 @@ class Rocker:
     """
     General class to aggregate all wanted data.
     """
-    def __init__(self, db_main: str, db_compare: list):
+    def __init__(self, db_main: str, db_compare: list, all_in_one: bool):
         """
         Aggregator init.
 
@@ -43,6 +43,7 @@ class Rocker:
         self.all_db = [db_main]
         self.all_db.extend(self.db_comp)
         self.ascendant.append(self.db_main)
+        self.all_in_one = all_in_one if all_in_one else None
 
     def get_common_mirnas(self):
         logging.info("Getting all miRNAs between these databases: {}...".format(self.all_db))
@@ -183,6 +184,21 @@ class Rocker:
 
         return lol_interactions
 
+    def copy_files(self, ori_dir: str, dest_dir, file_type: str):
+        if file_type == "data":
+            all_stats = [stat for stat in os.listdir(ori_dir) if os.path.isfile(os.path.join(ori_dir, stat)) and "results" in stat]
+        else:
+            all_stats = [stat for stat in os.listdir(ori_dir) if os.path.isfile(os.path.join(ori_dir, stat))]
+
+        for stat in all_stats:
+            src = os.path.join(ori_dir, stat)
+            if os.path.isfile(src):
+                dst = os.path.join(dest_dir, stat)
+                copyfile(src, dst)
+                os.remove(src)
+            else:
+                logging.error("File NOT found: {}".format(src))
+
     def run(self):
         # Check if dir exists
         formated_comp_db = "_".join(self.db_comp)
@@ -218,7 +234,7 @@ class Rocker:
             reformated_scores_dict = {self.db_main: defaultdict(dict)}
             count = 0
             count_val = 0
-            for mimat in common_mirnas:
+            for mimat in common_mirnas[:5]:
                 # For each gene in the db
                 for gene_id in scores_dict[self.db_main][mimat]:
                     add_in = True
@@ -262,7 +278,7 @@ class Rocker:
             for db in self.db_comp:
                 # For each mirna in the db
                 reformated_scores_dict[db] = defaultdict(dict)
-                for mimat in common_mirnas:
+                for mimat in common_mirnas[:5]:
                     for gene_id in common_genes[mimat]:
                         reformated_scores_dict[db][mimat][gene_id] = {
                                         "Score": scores_dict[db][mimat][gene_id]["Score"],
@@ -284,41 +300,28 @@ class Rocker:
                 filenames_1 = self.make_sub_datasets(common_mirnas, reformated_scores_dict, db)
                 filenames_1.append(filename)
                 
+                if not self.all_in_one:
+                    self.make_rocs()
+                    self.copy_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
+                    self.make_pr()
+                    self.copy_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
+
+                    # Remove files so as not to create issue with the next comparison
+                    # for filename in filenames_1:
+                    #     if os.path.isfile(filename):
+                    #         os.remove(filename)
+
+            if self.all_in_one:
                 self.make_rocs()
-
-                all_stats = [stat for stat in os.listdir(self.config["FILES"]["RESOURCES"]) if os.path.isfile(os.path.join(self.config["FILES"]["RESOURCES"], stat)) and "results" in stat]
-                for stat in all_stats:
-                    src = os.path.join(self.config["FILES"]["RESOURCES"], stat)
-                    if os.path.isfile(src):
-                        dst = os.path.join(perm_data_dir, stat)
-                        copyfile(src, dst)
-                        os.remove(src)
-                    else:
-                        logging.error("File NOT found: {}".format(src))
-
+                self.copy_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
                 self.make_pr()
-
-                # Copy images and stats results to permanent directory
-                all_img = [img for img in os.listdir("static/") if os.path.isfile(os.path.join("static/", img))]
-                for img in all_img:
-                    src = os.path.join("static/", img)
-                    if os.path.isfile(src):
-                        dst = os.path.join(perm_img_dir, img)
-                        copyfile(src, dst)
-                        os.remove(src)
-                    else:
-                        logging.error("File NOT found: {}".format(src))
-
-                # Remove files so as not to create issue with the next comparison
-                for filename in filenames_1:
-                    if os.path.isfile(filename):
-                        os.remove(filename)
+                self.copy_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
 
             logging.info("Rock analysis done.")
 
-            for filename in filenames:
-                if os.path.isfile(filename):
-                    os.remove(filename)
+            # for filename in filenames:
+            #     if os.path.isfile(filename):
+            #         os.remove(filename)
 
             return True
         return False

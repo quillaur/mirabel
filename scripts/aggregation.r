@@ -4,7 +4,7 @@ InsPack = function(pack)
 	if (!pack %in% installed.packages()) 
 	{ 
 		# print(paste("installing",pack)) 
-		install.packages(pack)
+		install.packages(pack, repos=structure(c(CRAN="http://cloud.r-project.org/")))
 	} 
 	else
 	{

@@ -5,15 +5,15 @@
     <title>Main page</title>
 </head>
 <body>
-    <h1>Already existing miRabels</h1>
-        {% for each in existing_mirabels %}
-            <p>{{ each }}</p>
-        {% endfor %}
-
     <form action = "http://localhost:5000/main_page" method = "POST" enctype = "multipart/form-data">
-        <h1>Delete one:</h1>
-        <input type="text" name="db_name">
+        <h1>Already existing miRabels</h1>
+        {% for each in existing_mirabels %}
+            <input type="checkbox" name="db_name" value="{{each}}"> {{each}}<br>
+        {% endfor %}
+        <p>CAREFULL ! If you click on delete, the aggregation will be removed without further warning !</p>
+        <p>View metrics can only be done for one miRabel at a time. Takes several minutes (3-5) to compute.</p>
         <input type = "submit" name = "submit_button" value = "Delete" />
+        <input type = "submit" name = "submit_button" value = "View metrics" />
         
         <h1>Create more miRabels !</h1>
         <input type = "submit" name = "submit_button" value = "Create a miRabel" />

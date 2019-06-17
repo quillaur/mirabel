@@ -6,7 +6,7 @@ InsPack = function(pack)
 	if (!pack %in% installed.packages()) 
 	{ 
 		print(paste("installing",pack)) 
-		install.packages(pack)
+		install.packages(pack, repos=structure(c(CRAN="http://cloud.r-project.org/")))
 	} 
 	else
 	{
@@ -14,44 +14,33 @@ InsPack = function(pack)
 	}
 } 
 InsPack("flux")
+InsPack("rowr")
+
 library("flux")
+library("rowr")
 
 print("I am random_pr.py !")
 
 tmp_files_list = list.files("resources/tmp_roc_data/random_sets")
-# print(tmp_files_list)
+
 db_name_list = c()
-for (file in tmp_files_list) {
-	db_name = strsplit(file, "_tmp")[[1]][1]
-	if ("Mirabel" %in% db_name && !(db_name %in% db_name_list)) {
-		db_name_list = c(db_name, db_name_list)
-	} else if (!(db_name %in% db_name_list)) {
-		db_name_list = c(db_name_list, db_name)
-	}
-
-	if (length(db_name_list) == 2) {
-		break
-	}
-}
-# print(db_name_list)
-
-db_1_files = c()
-db_2_files = c()
-for (file in tmp_files_list) {
-	# print(file)
-	for (i in 1:10) {
-		test_number = paste("_", as.character(i), ".txt", sep = "")
-		if (length(grep(test_number, file)) > 0 && length(grep(db_name_list[1], file)) > 0) {
-			db_1_files[i] = file
-
-		} else if (length(grep(test_number, file)) > 0 && length(grep(db_name_list[2], file)) > 0) {
-			db_2_files[i] = file
-
+# I need miRabel to be the first element of the vector, so I loop twice through the loop.
+for (i in 1:2)
+{
+	for (file in tmp_files_list) 
+	{
+		db_name = strsplit(file, "_tmp")[[1]][1]
+		if (!(db_name %in% db_name_list) && grepl("Mirabel", db_name)) 
+		{
+			db_name_list = c(db_name_list, db_name)
 		}
-  	}
+		else if (!(db_name %in% db_name_list) && length(db_name_list) > 0)
+		{
+			db_name_list = c(db_name_list, db_name)
+		}
+	}
 }
-# print(db_1_files)
-# print(db_2_files)
+print(db_name_list)
 
 compute_pr = function(res_df)
 {
@@ -79,58 +68,54 @@ compute_pr = function(res_df)
 	return(pr_df_0)
 }
 
-all_pr_auc = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE) 
+all_pr_auc = data.frame() 
 increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
 decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk")
 
-for (i in 1:10) {
-	db_name = strsplit(file, "_tmp")[[1]][1]
-	file_0 = file.path("resources/tmp_roc_data/random_sets", db_1_files[i])
-	print(file_0)
-	res0 = read.table(file_0, header = TRUE, sep = ";")
-	file_1 = file.path("resources/tmp_roc_data/random_sets", db_2_files[i])
-	print(file_1)
-	res1 = read.table(file_1, header = TRUE, sep = ";")
-	
-	# Mirabel order is increasing
-	res0 = res0[order(res0$score, decreasing = FALSE),]
+for (db_name in db_name_list)
+{
+	AUC = data.frame()
+	for (i in 1:10) {
+		file_name = paste(db_name, "_tmp_random_set_", i, ".txt", sep="")
+		file_0 = file.path("resources/tmp_roc_data/random_sets", file_name)
+		print(file_0)
+		res0 = read.table(file_0, header = TRUE, sep = ";")
+		# print(head(res0))
 
-	# The other DB, we don't know the sense
-	if (db_name_list[2] %in% decreasing) {
-		res1 = res1[order(res1$score, decreasing = TRUE),]
-	} else {
-		res1 = res1[order(res1$score, decreasing = FALSE),]
+		# Precision versus Recall
+		# pr_df_0 = compute_pr(res0)
+		pr_df_0 = data.frame(precision = res0$precision, recall = res0$recall, f_score = res0$f_score)
+		auc.pr_df_0 = auc(pr_df_0$recall, pr_df_0$precision)
+		tmp_AUC = data.frame(res0=auc.pr_df_0, stringsAsFactors=FALSE)
+		AUC = rbind(AUC, tmp_AUC)
 	}
-
-	# print(head(res0))
-	# print(head(res1))
-
-	# Precision versus Recall
-	# pr_df_0 = compute_pr(res0)
-	pr_df_0 = data.frame(precision = res0$precision, recall = res0$recall, f_score = res0$f_score)
-	auc.pr_df_0 = auc(pr_df_0$recall, pr_df_0$precision)
-
-	# pr_df_1 = compute_pr(res1)
-	pr_df_1 = data.frame(precision = res1$precision, recall = res1$recall, f_score = res1$f_score)
-	auc.pr_df_1 = auc(pr_df_1$recall, pr_df_1$precision)
-	AUC = data.frame(res0=auc.pr_df_0, res1=auc.pr_df_1, stringsAsFactors=FALSE)
-	all_pr_auc = rbind(all_pr_auc, AUC)
+	all_pr_auc = cbind.fill(all_pr_auc, AUC, fill = NA)
+	# Rename column
+	names(all_pr_auc)[names(all_pr_auc)=="res0"] = db_name
 }
+all_pr_auc$init = NULL
 
-mean_pr_db_1 = mean(all_pr_auc$res0)
-mean_pr_db_2 = mean(all_pr_auc$res1)
-sem_pr_db_1 = sd(all_pr_auc$res0)/sqrt(nrow(all_pr_auc))
-sem_pr_db_2 = sd(all_pr_auc$res1)/sqrt(nrow(all_pr_auc))
-
-names(all_pr_auc)[names(all_pr_auc)=="res0"] = db_name_list[1]
-names(all_pr_auc)[names(all_pr_auc)=="res1"] = db_name_list[2]
-
-print(all_pr_auc)
+sqrt_nb_sample = sqrt(nrow(all_pr_auc))
+mean_pr_db_all = "Mean:"
+sem_pr_db_all = "SEM:"
+for (i in 1:ncol(all_pr_auc))
+{
+	mean_pr_db = mean(all_pr_auc[,i])
+	sem_pr_db = sd(all_pr_auc[,i])/sqrt_nb_sample
+	mean_pr_db_all = paste(mean_pr_db_all, mean_pr_db)
+	sem_pr_db_all = paste(sem_pr_db_all, sem_pr_db)
+}
 
 result_file = paste("resources/", db_name_list[1], "_", db_name_list[2], "_stats_pr_results.txt", sep = "")
 sink(result_file)
 print(all_pr_auc)
-print(paste("Mean:", mean_pr_db_1, mean_pr_db_2))
-print(paste("SEM:", sem_pr_db_1, sem_pr_db_2))
-t.test(all_pr_auc[,1], all_pr_auc[,2])
+print(mean_pr_db_all)
+print(sem_pr_db_all)
+stat_results = list()
+for (i in 2:ncol(all_pr_auc))
+{
+	stat_results[[i]] = t.test(all_pr_auc[,1], all_pr_auc[,i])
+}
+print(stat_results)
 sink()
+print("I am done. Random PR out.")

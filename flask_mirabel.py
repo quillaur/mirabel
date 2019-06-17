@@ -19,8 +19,10 @@ app = Flask(__name__)
 def main_page():
     if request.method == "POST":
         if request.form["submit_button"] == "Delete":
-            db_name = request.form.get("db_name")
-            utilities.delete_table(db_name)
+            db_names = request.form.getlist("db_name")
+            for db_name in db_names:
+                db_name = db_name.split(":")[0]
+                utilities.delete_table(db_name)
 
             # existing_mirabels is a list of lists
             mirabels = utilities.get_existing_mirabels()
@@ -28,6 +30,14 @@ def main_page():
             existing_mirabels = reformat_list_for_html(mirabels)
 
             return render_template("main_page.html", existing_mirabels = existing_mirabels)
+
+        if request.form["submit_button"] == "View metrics":
+            db_names = request.form.getlist("db_name")
+            print(db_names)
+            db_name = db_names[0].split(":")[0]
+            databases = [db for db in db_names[0].split(":")[1].split(" ") if db != ""]
+            print(databases)
+            return redirect(url_for("aggregate_results", db_name = db_name, databases = databases))
 
         if request.form["submit_button"] == "Create a miRabel":
             return redirect(url_for("create_mirabel"))
@@ -96,7 +106,7 @@ def compare_performances():
         if request.form["submit_button"] == "Return to perf comparisons":
             return render_template("compare_performances.html", db_list = db_list)
 
-        if request.form["submit_button"] == "Submit":
+        if request.form["submit_button"] == "One by one":
             db_main = request.form.get("miRabel")
             db_comp = request.form.getlist("compare")
 
@@ -111,7 +121,7 @@ def compare_performances():
                     os.remove(file)
 
             # Make ROC analysis
-            rocker = Rocker(db_main, db_comp)
+            rocker = Rocker(db_main, db_comp, False)
             success = rocker.run()
 
             # Print results only for successful analysis
