@@ -307,9 +307,9 @@ class Rocker:
                     self.copy_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
 
                     # Remove files so as not to create issue with the next comparison
-                    # for filename in filenames_1:
-                    #     if os.path.isfile(filename):
-                    #         os.remove(filename)
+                    for filename in filenames_1:
+                        if os.path.isfile(filename):
+                            os.remove(filename)
 
             if self.all_in_one:
                 self.make_rocs()
@@ -319,9 +319,9 @@ class Rocker:
 
             logging.info("Rock analysis done.")
 
-            # for filename in filenames:
-            #     if os.path.isfile(filename):
-            #         os.remove(filename)
+            for filename in filenames:
+                if os.path.isfile(filename):
+                    os.remove(filename)
 
             return True
         return False

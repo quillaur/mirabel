@@ -23,6 +23,7 @@ Coded mostly in Python3 with some R implementations as well (aggregation and ROC
 - Compare what is common between aggregated DBs and the challenger one. Not just miRabel vs others.
 - Adapt rock scripts to match PR ones.
 - Adapt performance results view.
+- Delete already performed comparaison if desired.
 
 # How to work on it
 Pull your own branch
