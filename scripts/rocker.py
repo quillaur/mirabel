@@ -11,7 +11,7 @@ from ast import literal_eval
 from progressbar import *
 from collections import defaultdict
 import random
-from shutil import copyfile
+from shutil import move
 from operator import itemgetter
 from progressbar import ProgressBar
 
@@ -184,7 +184,7 @@ class Rocker:
 
         return lol_interactions
 
-    def copy_files(self, ori_dir: str, dest_dir, file_type: str):
+    def move_files(self, ori_dir: str, dest_dir, file_type: str):
         if file_type == "data":
             all_stats = [stat for stat in os.listdir(ori_dir) if os.path.isfile(os.path.join(ori_dir, stat)) and "results" in stat]
         else:
@@ -194,15 +194,15 @@ class Rocker:
             src = os.path.join(ori_dir, stat)
             if os.path.isfile(src):
                 dst = os.path.join(dest_dir, stat)
-                copyfile(src, dst)
-                os.remove(src)
+                logging.info("Moving {}".format(src))
+                move(src, dst)
             else:
                 logging.error("File NOT found: {}".format(src))
 
     def run(self):
         # Check if dir exists
         formated_comp_db = "_".join(self.db_comp)
-        perm_data_dir = os.path.join(self.config["FILES"]["PERM_COMPARISONS"], "{}_vs_{}".format(self.db_main, formated_comp_db))
+        perm_data_dir = os.path.join(self.config["FILES"]["PERM_COMPARISONS"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, self.all_in_one))
         if os.path.isdir(perm_data_dir):
             return True
         else:
@@ -210,7 +210,7 @@ class Rocker:
             common_mirnas = utilities.get_common_mirnas(self.all_db)
 
             # Create a permanent directory to store this comparison
-            perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}".format(self.db_main, formated_comp_db))
+            perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, self.all_in_one))
             directories = [perm_data_dir, perm_img_dir]
         
             try:
@@ -302,9 +302,9 @@ class Rocker:
                 
                 if not self.all_in_one:
                     self.make_rocs()
-                    self.copy_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
                     self.make_pr()
-                    self.copy_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
+                    self.move_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
+                    self.move_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
 
                     # Remove files so as not to create issue with the next comparison
                     for filename in filenames_1:
@@ -313,9 +313,9 @@ class Rocker:
 
             if self.all_in_one:
                 self.make_rocs()
-                self.copy_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
                 self.make_pr()
-                self.copy_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
+                self.move_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
+                self.move_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
 
             logging.info("Rock analysis done.")
 
