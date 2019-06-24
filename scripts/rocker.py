@@ -45,15 +45,6 @@ class Rocker:
         self.ascendant.append(self.db_main)
         self.all_in_one = all_in_one if all_in_one else None
 
-    def get_common_mirnas(self):
-        logging.info("Getting all miRNAs between these databases: {}...".format(self.all_db))
-        db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.all_db]
-
-        logging.info("Intersecting common miRNAs ...")
-        common_mirnas = list(set(db_mirs_lists[0]).intersection(*db_mirs_lists))
-
-        return common_mirnas
-
     def write_tmp_roc_data_to_file(self, filename: str, interactions: list):
         # Write results temporary in CSV so as to be aggregated with R
         with open(filename, "w") as my_csv:
@@ -71,9 +62,8 @@ class Rocker:
         subprocess.call("scripts/random_pr.r")
 
     def get_scores_and_labels(self, db: str, mirna_list: list):
-        order = "ASC" if db in self.ascendant else "DESC"
         mirna_list = ", ".join([str(mirna_id) for mirna_id in mirna_list])
-        query = """SELECT Score, Validated, GeneID, Mimat FROM {} WHERE Mimat IN ({}) ORDER BY Score {};""".format(db, mirna_list, order)
+        query = """SELECT Score, Validated, GeneID, Mimat FROM {} WHERE Mimat IN ({});""".format(db, mirna_list)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
         cursor.execute(query)
@@ -109,7 +99,8 @@ class Rocker:
             sub += 1
 
             # Sort by score write results to file
-            lol_interactions = self.sort_by_score(sub_dict[db_name])
+            order = False if db_name in self.ascendant else True
+            lol_interactions = self.sort_by_score(sub_dict[db_name], descending=order)
             # compute precision / recall / f-score
             lol_interactions = self.compute_precision_recall(lol_interactions)
             # Write results to file
@@ -169,7 +160,7 @@ class Rocker:
 
         return interactions
 
-    def sort_by_score(self, scores_dict: dict):
+    def sort_by_score(self, scores_dict: dict, descending: bool):
         # Make a list of tuples from given interactions
         lol_interactions = []
         for mimat in scores_dict:
@@ -177,7 +168,7 @@ class Rocker:
                 lol_interactions.append([float(scores_dict[mimat][gene_id]["Score"]), int(scores_dict[mimat][gene_id]["Validated"])])
                     
         # Sort results by score
-        lol_interactions = sorted(lol_interactions, key=itemgetter(0))
+        lol_interactions = sorted(lol_interactions, key=itemgetter(0), reverse=descending)
 
         # Limit to 1M interactions because of computer resources (on PR AUC calculation)
         lol_interactions = lol_interactions[:1000000]
@@ -202,7 +193,7 @@ class Rocker:
     def run(self):
         # Check if dir exists
         formated_comp_db = "_".join(self.db_comp)
-        perm_data_dir = os.path.join(self.config["FILES"]["PERM_COMPARISONS"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, self.all_in_one))
+        perm_data_dir = os.path.join(self.config["FILES"]["PERM_COMPARISONS"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, str(self.all_in_one)))
         if os.path.isdir(perm_data_dir):
             return True
         else:
@@ -212,7 +203,7 @@ class Rocker:
             common_mirnas = list(set(mirab_intrinsic_mirnas) & set(common_extrinsic_mirnas))
 
             # Create a permanent directory to store this comparison
-            perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, self.all_in_one))
+            perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, str(self.all_in_one)))
             directories = [perm_data_dir, perm_img_dir]
         
             try:
@@ -236,7 +227,7 @@ class Rocker:
             reformated_scores_dict = {self.db_main: defaultdict(dict)}
             count = 0
             count_val = 0
-            for mimat in common_mirnas[:5]:
+            for mimat in common_mirnas:
                 # For each gene in the db
                 for gene_id in scores_dict[self.db_main][mimat]:
                     add_in = True
@@ -262,7 +253,7 @@ class Rocker:
             if count > 1000000:
                 logging.warning("Due to resource limitations, only the first 1M interactions will be used for comparison.")
             logging.info("Sort interactions by score...")
-            lol_interactions = self.sort_by_score(reformated_scores_dict[self.db_main])
+            lol_interactions = self.sort_by_score(reformated_scores_dict[self.db_main], descending=False)
             # compute precision / recall / f-score
             lol_interactions = self.compute_precision_recall(lol_interactions)
             # write results to file
@@ -280,7 +271,7 @@ class Rocker:
             for db in self.db_comp:
                 # For each mirna in the db
                 reformated_scores_dict[db] = defaultdict(dict)
-                for mimat in common_mirnas[:5]:
+                for mimat in common_mirnas:
                     for gene_id in common_genes[mimat]:
                         reformated_scores_dict[db][mimat][gene_id] = {
                                         "Score": scores_dict[db][mimat][gene_id]["Score"],
@@ -288,7 +279,8 @@ class Rocker:
                                     }
                 
                 # Sort by score write results to file
-                lol_interactions = self.sort_by_score(reformated_scores_dict[db])
+                order = False if db in self.ascendant else True
+                lol_interactions = self.sort_by_score(reformated_scores_dict[db], descending=order)
                 # compute precision / recall / f-score
                 lol_interactions = self.compute_precision_recall(lol_interactions)
                 # write results to file

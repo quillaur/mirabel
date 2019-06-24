@@ -152,6 +152,7 @@ def performances_results(db_name, db_comp, all_in_one):
     perm_img_dir = os.path.join("static/already_done_comparisons", "{}_vs_{}_{}".format(db_name, formated_comp_db, all_in_one))
     crop_perm_img_dir = perm_img_dir.replace("static/", "")
 
+    all_in_one = True if all_in_one == "True" else False
     if not all_in_one:
         img_list = [os.path.join(crop_perm_img_dir, "{}_{}_roc.jpg".format(db_name, db_compared)) for db_compared in db_comp]
         for db_compared in db_comp:
@@ -270,7 +271,7 @@ def performances_results(db_name, db_comp, all_in_one):
                     lines = handle.split("\n")
                     for i, line in enumerate(lines):
                         line = line.replace('"', '')
-                        if i < 25:
+                        if i < 18:
                             if "Mean" in line:
                                 db_results[db_name]["roc_auc"] = round(float(line.split(" ")[2]), 3)
                                 db_results[db]["roc_auc"] = round(float(line.split(" ")[3]), 3)
@@ -284,7 +285,7 @@ def performances_results(db_name, db_comp, all_in_one):
                                 except:
                                     db_results[db_name]["p_val"] = float(line.split("p-value < ")[1])
                                     db_results[db]["p_val"] = float(line.split("p-value < ")[1])
-                        elif 50 < i < 75:
+                        elif i < 37:
                             if "Mean" in line:
                                 db_results[db_name]["specificity"] = round(float(line.split(" ")[2]), 3)
                                 db_results[db]["specificity"] = round(float(line.split(" ")[3]), 3)
@@ -298,7 +299,7 @@ def performances_results(db_name, db_comp, all_in_one):
                                 except:
                                     db_results[db_name]["p_val_spe"] = float(line.split("p-value < ")[1])
                                     db_results[db]["p_val_spe"] = float(line.split("p-value < ")[1])
-                        elif i > 75:
+                        elif i > 37:
                             if "Mean" in line:
                                 db_results[db_name]["sensibility"] = round(float(line.split(" ")[2]), 3)
                                 db_results[db]["sensibility"] = round(float(line.split(" ")[3]), 3)

@@ -70,7 +70,7 @@ compute_pr = function(res_df)
 
 all_pr_auc = data.frame() 
 increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk")
+decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 
 for (db_name in db_name_list)
 {

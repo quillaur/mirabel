@@ -43,7 +43,7 @@ for (file in ori_files_list)
 all_auc = data.frame()
 all_pauc = data.frame()
 increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk")
+decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 colors = c("darkgreen", "black", "blue", "orange", "red")
 auc_print_int = c(0.5, 0.4, 0.3, 0.2, 0.1)
 
