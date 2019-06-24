@@ -309,6 +309,7 @@ class Rocker:
                     # Remove files so as not to create issue with the next comparison
                     for filename in filenames_1:
                         if os.path.isfile(filename):
+                            logging.info("Removing {}".format(filename))
                             os.remove(filename)
 
             if self.all_in_one:
@@ -316,12 +317,15 @@ class Rocker:
                 self.make_pr()
                 self.move_files(ori_dir=self.config["FILES"]["RESOURCES"], dest_dir=perm_data_dir, file_type="data")
                 self.move_files(ori_dir="static/", dest_dir=perm_img_dir, file_type="img")
+                
+                filenames.extend(filenames_1)
+
+            # for filename in filenames:
+            #     if os.path.isfile(filename):
+            #         logging.info("Removing {}".format(filename))
+            #         os.remove(filename)
 
             logging.info("Rock analysis done.")
-
-            for filename in filenames:
-                if os.path.isfile(filename):
-                    os.remove(filename)
 
             return True
         return False

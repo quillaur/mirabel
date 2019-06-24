@@ -137,8 +137,10 @@ def compare_performances():
             db_list = comparison.split(" vs ")
             db_main = db_list[0]
             db_comp = db_list[1].split(" and ")
+            del db_comp[-1]
+            all_in_one = comparison.split("all in one = ")[-1]
 
-            return redirect(url_for("performances_results", db_name = db_main, db_comp = db_comp))
+            return redirect(url_for("performances_results", db_name = db_main, db_comp = db_comp, all_in_one=all_in_one))
 
     return render_template("compare_performances.html", db_list = db_list, comparisons = comparisons)
 
@@ -346,12 +348,12 @@ def performances_results(db_name, db_comp, all_in_one):
                     if i == 1:
                         elems = [x for x in line.split(" ") if x != ""]
                         del elems[0]
-                        roc_auc = " ".join(elems)
+                        roc_auc = " // ".join(elems)
 
                     elif i == 3:
                         elems = [x for x in line.split(" ") if x != ""]
                         del elems[0]
-                        p_roc_auc = " ".join(elems)
+                        p_roc_auc = " // ".join(elems)
 
         stats_file = os.path.join(perm_data_dir, "{}_{}_pr_results.txt".format(db_name, db))
         f_score_res = {
@@ -368,13 +370,13 @@ def performances_results(db_name, db_comp, all_in_one):
                     if i == 1:
                         elems = [x for x in line.split(" ") if x != ""]
                         del elems[0]
-                        pr_auc = " ".join(elems)
+                        pr_auc = " // ".join(elems)
 
                     elif i > 9:
                         elems = [item for item in line.split(" ") if item != ""]
                         if elems:
                             percent = int(elems[1].replace("%", ""))
-                            f_score_res[percent] = " ".join(elems[2:])
+                            f_score_res[percent] = " // ".join(elems[2:])
 
         auc_stats = []
         auc_stats.append("##################################")
@@ -391,6 +393,59 @@ def performances_results(db_name, db_comp, all_in_one):
         auc_stats.append("\t - 20%: {}".format(f_score_res[20]))
         auc_stats.append("\t - 40%: {}".format(f_score_res[40]))
         auc_stats.append("\t - 100%: {}".format(f_score_res[100]))
+
+        # Random set statistics
+        stats_file = os.path.join(perm_data_dir, "{}_{}_stats_results.txt".format(db_name, db))
+        if os.path.isfile(stats_file):
+            with open(stats_file, "r") as my_file:
+                handle = my_file.read()
+                lines = handle.split("\n")
+                for i, line in enumerate(lines):
+                    if "Mean" in line:
+                        line = line.replace('"', '')
+                        elems = [item for item in line.split(" ") if item != ""]
+                        del elems[:2]
+                        if i < 4:
+                            mean_auc = " // ".join(elems)
+                        elif i < 38:
+                            mean_spe = " // ".join(elems)
+                        elif i < 71:
+                            mean_sen = " // ".join(elems)
+                    elif "SEM" in line:
+                        line = line.replace('"', '')
+                        elems = [item for item in line.split(" ") if item != ""]
+                        del elems[:2]
+                        if i < 4:
+                            sem_auc = " // ".join(elems)
+                        elif i < 38:
+                            sem_spe = " // ".join(elems)
+                        elif i < 71:
+                            sem_sen = " // ".join(elems)
+                    elif "p-value" in line:
+                        if i < 32:
+                            p_val_auc = [item for item in line.split(" ") if item != ""][-1]
+                        elif i < 65:
+                            p_val_spe = [item for item in line.split(" ") if item != ""][-1]
+                        elif i < 98:
+                            p_val_sen = [item for item in line.split(" ") if item != ""][-1]
+
+        auc_stats.append("##################################")
+        auc_stats.append("###### STATSTICS ON RANDOM SETS #######")
+        auc_stats.append("##################################")
+        auc_stats.append("####### {} VS {} #######".format(db_name, " and ".join(db_comp)))
+        auc_stats.append("##################################")
+        auc_stats.append("Mean AUC: {}".format(mean_auc))
+        auc_stats.append("SEM: {}".format(sem_auc))
+        auc_stats.append("p-value: {}".format(p_val_auc))
+        auc_stats.append("----------------------------------")
+        auc_stats.append("Mean specificity: {}".format(mean_spe))
+        auc_stats.append("SEM: {}".format(sem_spe))
+        auc_stats.append("p-value: {}".format(p_val_spe))
+        auc_stats.append("----------------------------------")
+        auc_stats.append("Mean sensibility: {}".format(mean_sen))
+        auc_stats.append("SEM: {}".format(sem_sen))
+        auc_stats.append("p-value: {}".format(p_val_sen))
+
         return render_template("performances_results.html", img_list = img_list, auc_stats = auc_stats)
     
 
@@ -421,9 +476,11 @@ def get_existing_comparisons():
     for directory in directories_list:
         db_list = directory.split("_vs_")
         db_compared = db_list[1].split("_")
+        all_in_one = db_compared[-1]
+        del db_compared[-1]
         if len(db_compared) > 1:
             db_compared = " and ".join(db_compared)
-        comparisons.append("{} vs {}".format(db_list[0], db_compared))
+        comparisons.append("{} vs {} and all in one = {}".format(db_list[0], db_compared, all_in_one))
 
     return comparisons
 
