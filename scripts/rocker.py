@@ -207,7 +207,9 @@ class Rocker:
             return True
         else:
             # Get common mirnas between all aggregated DB
-            common_mirnas = utilities.get_common_mirnas(self.all_db)
+            mirab_intrinsic_mirnas = utilities.get_common_intrinsic_mirnas(self.db_main)
+            common_extrinsic_mirnas = utilities.get_common_mirnas(self.all_db)
+            common_mirnas = list(set(mirab_intrinsic_mirnas) & set(common_extrinsic_mirnas))
 
             # Create a permanent directory to store this comparison
             perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}_{}".format(self.db_main, formated_comp_db, self.all_in_one))
@@ -320,10 +322,10 @@ class Rocker:
                 
                 filenames.extend(filenames_1)
 
-            # for filename in filenames:
-            #     if os.path.isfile(filename):
-            #         logging.info("Removing {}".format(filename))
-            #         os.remove(filename)
+            for filename in filenames:
+                if os.path.isfile(filename):
+                    logging.info("Removing {}".format(filename))
+                    os.remove(filename)
 
             logging.info("Rock analysis done.")
 
