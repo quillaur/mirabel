@@ -43,7 +43,7 @@ for (file in ori_files_list)
 all_auc = data.frame()
 all_pauc = data.frame()
 increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk")
+decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 colors = c("darkgreen", "black", "blue", "orange", "red")
 auc_print_int = c(0.5, 0.4, 0.3, 0.2, 0.1)
 
@@ -81,18 +81,28 @@ for (file in tmp_files_list)
 }
 interaction_number = nrow(res0)
 title(paste(interaction_number, "common interactions"), col = "black", font = 5, line = -1)
-legend("topright", inset=.05, fill=colors[1:3], horiz=FALSE, legend = c(db_name_list), text.col = colors[1:3])
+legend("topright", inset=.05, fill=colors[1:db_number], horiz=FALSE, legend = c(db_name_list), text.col = colors[1:db_number])
 dev.off()
 print("PR curve plot done.")
 all_auc$init = NULL
 f_score_df$init = NULL
 
 jpeg(paste("static/", db_name_list[1], "_", db_name_list[2], "_f_score.jpg", sep = ""), width = 8, height = 8, units = 'in', res = 300)
-plot(x = seq(1, interaction_number), y = f_score_df[,1], type="l", col= colors[1], ylim = c(0, 1), xlab="Rank of targets", ylab="F-score")
-par(fig = c(0,1,0,1), new = TRUE)
-plot(x = seq(1, interaction_number), y = f_score_df[,2], type="l", col= colors[2], ylim = c(0, 1), xlab="Rank of targets", ylab="F-score")
+for (i in 1:ncol(f_score_df))
+{
+	if (i > 1)
+	{
+		par(fig = c(0,1,0,1), new = TRUE)
+		plot(x = seq(1, interaction_number), y = f_score_df[,i], type="l", col= colors[i], ylim = c(0, 1), xlab="Rank of targets", ylab="F-score")
+
+	}
+	else
+	{
+		plot(x = seq(1, interaction_number), y = f_score_df[,i], type="l", col= colors[i], ylim = c(0, 1), xlab="Rank of targets", ylab="F-score")
+	}
+}
 title(paste(interaction_number, "common interactions"), col = "black", font = 5, line = -1)
-legend("topright", inset=.05, fill=colors[1:3], horiz=FALSE, legend = c(db_name_list), text.col = colors[1:3])
+legend("topright", inset=.05, fill=colors[1:db_number], horiz=FALSE, legend = c(db_name_list), text.col = colors[1:db_number])
 dev.off()
 
 all_f_scores = data.frame(top_predictions = c('10%','20%','40%','100%'))

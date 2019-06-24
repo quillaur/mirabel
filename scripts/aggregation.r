@@ -14,7 +14,7 @@ InsPack = function(pack)
 InsPack("RobustRankAggreg")
 library("RobustRankAggreg")
 
-data = read.csv("/home/quillaur/github_projects/mirabel/resources/tmp_predictions_lists.csv", header = TRUE, sep = ";")
+data = read.csv("resources/tmp_predictions_lists.csv", header = TRUE, sep = ";")
 headers = colnames(data, do.NULL = TRUE, prefix = "col")
 
 glist = list()

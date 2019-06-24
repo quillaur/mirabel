@@ -284,3 +284,21 @@ def get_common_mirnas(all_db: list):
     common_mirnas = list(set(db_mirs_lists[0]).intersection(*db_mirs_lists))
 
     return common_mirnas
+
+def get_common_intrinsic_mirnas(mirabel: str):
+    # Get aggregated databases
+    query = "SELECT * FROM ExistingMirabel WHERE Name = '{}'".format(mirabel)
+    config = extract_config()
+    connection = mysql_connection(config)
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute(query)
+
+    aggregated_db = []
+    for row in cursor:
+        for elem in row.keys():
+            if row[elem] == "1":
+                aggregated_db.append(elem)
+
+    return get_common_mirnas(aggregated_db)
+
+
