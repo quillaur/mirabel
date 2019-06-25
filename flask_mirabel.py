@@ -4,6 +4,7 @@ import sys
 import mysql.connector
 # import pandas
 from ast import literal_eval
+import shutil
 
 # My specific imports
 from scripts import utilities
@@ -33,10 +34,9 @@ def main_page():
 
         if request.form["submit_button"] == "View metrics":
             db_names = request.form.getlist("db_name")
-            print(db_names)
             db_name = db_names[0].split(":")[0]
             databases = [db for db in db_names[0].split(":")[1].split(" ") if db != ""]
-            print(databases)
+
             return redirect(url_for("aggregate_results", db_name = db_name, databases = databases))
 
         if request.form["submit_button"] == "Create a miRabel":
@@ -103,8 +103,8 @@ def compare_performances():
     comparisons = get_existing_comparisons()
 
     if request.method == "POST":
-        if request.form["submit_button"] == "Return to perf comparisons":
-            return render_template("compare_performances.html", db_list = db_list)
+        # if request.form["submit_button"] == "Return to perf comparisons":
+        #     return render_template("compare_performances.html", db_list = db_list)
 
         if request.form["submit_button"] == "One by one" or request.form["submit_button"] == "All in one":
             all_in_one = False if request.form["submit_button"] == "One by one" else True
@@ -141,6 +141,25 @@ def compare_performances():
             all_in_one = comparison.split("all in one = ")[-1]
 
             return redirect(url_for("performances_results", db_name = db_main, db_comp = db_comp, all_in_one=all_in_one))
+
+        elif request.form["submit_button"] == "Delete":
+            db_names = request.form.getlist("comparisons")
+
+            for db_name in db_names:
+                db_list = db_name.split(" vs ")
+                db_main = db_list[0]
+                db_comp = db_list[1].split(" and ")
+                del db_comp[-1]
+                all_in_one = db_name.split("all in one = ")[-1]
+
+                dir_path = "{}_vs_{}_{}".format(db_main, "_".join(db_comp), all_in_one)
+                paths_to_del = [os.path.join("resources/already_done_comparisons", dir_path), os.path.join("static/already_done_comparisons", dir_path)]
+
+                for path in paths_to_del:
+                    if os.path.isdir(path):
+                        shutil.rmtree(path, ignore_errors=True)
+
+            return redirect(url_for("compare_performances"))
 
     return render_template("compare_performances.html", db_list = db_list, comparisons = comparisons)
 
@@ -397,6 +416,23 @@ def performances_results(db_name, db_comp, all_in_one):
 
         # Random set statistics
         stats_file = os.path.join(perm_data_dir, "{}_{}_stats_results.txt".format(db_name, db))
+        values_dict = {
+            "mean": {
+                "auc": None,
+                "spe": None,
+                "sen": None
+            },
+            "sem": {
+                "auc": None,
+                "spe": None,
+                "sen": None
+            },
+            "p_val": {
+                "auc": [],
+                "spe": [],
+                "sen": []
+            }
+        }
         if os.path.isfile(stats_file):
             with open(stats_file, "r") as my_file:
                 handle = my_file.read()
@@ -406,46 +442,46 @@ def performances_results(db_name, db_comp, all_in_one):
                         line = line.replace('"', '')
                         elems = [item for item in line.split(" ") if item != ""]
                         del elems[:2]
-                        if i < 4:
-                            mean_auc = " // ".join(elems)
-                        elif i < 38:
-                            mean_spe = " // ".join(elems)
-                        elif i < 71:
-                            mean_sen = " // ".join(elems)
+                        if not values_dict["mean"]["auc"]:
+                            values_dict["mean"]["auc"] = " // ".join(elems)
+                        elif not values_dict["mean"]["spe"]:
+                            values_dict["mean"]["spe"] = " // ".join(elems)
+                        elif not values_dict["mean"]["sen"]:
+                            values_dict["mean"]["sen"] = " // ".join(elems)
                     elif "SEM" in line:
                         line = line.replace('"', '')
                         elems = [item for item in line.split(" ") if item != ""]
                         del elems[:2]
-                        if i < 4:
-                            sem_auc = " // ".join(elems)
-                        elif i < 38:
-                            sem_spe = " // ".join(elems)
-                        elif i < 71:
-                            sem_sen = " // ".join(elems)
+                        if not values_dict["sem"]["auc"]:
+                            values_dict["sem"]["auc"] = " // ".join(elems)
+                        elif not values_dict["sem"]["spe"]:
+                            values_dict["sem"]["spe"] = " // ".join(elems)
+                        elif not values_dict["sem"]["sen"]:
+                            values_dict["sem"]["sen"] = " // ".join(elems)
                     elif "p-value" in line:
-                        if i < 32:
-                            p_val_auc = [item for item in line.split(" ") if item != ""][-1]
-                        elif i < 65:
-                            p_val_spe = [item for item in line.split(" ") if item != ""][-1]
-                        elif i < 98:
-                            p_val_sen = [item for item in line.split(" ") if item != ""][-1]
+                        if len(values_dict["p_val"]["auc"]) < len(db_comp):
+                            values_dict["p_val"]["auc"].append([item for item in line.split(" ") if item != ""][-1])
+                        elif len(values_dict["p_val"]["spe"]) < len(db_comp):
+                            values_dict["p_val"]["spe"].append([item for item in line.split(" ") if item != ""][-1])
+                        elif len(values_dict["p_val"]["sen"]) < len(db_comp):
+                            values_dict["p_val"]["sen"].append([item for item in line.split(" ") if item != ""][-1])
 
         auc_stats.append("##################################")
         auc_stats.append("###### STATSTICS ON RANDOM SETS #######")
         auc_stats.append("##################################")
         auc_stats.append("####### {} VS {} #######".format(db_name, " and ".join(db_comp)))
         auc_stats.append("##################################")
-        auc_stats.append("Mean AUC: {}".format(mean_auc))
-        auc_stats.append("SEM: {}".format(sem_auc))
-        auc_stats.append("p-value: {}".format(p_val_auc))
+        auc_stats.append("Mean AUC: {}".format(values_dict["mean"]["auc"]))
+        auc_stats.append("SEM: {}".format(values_dict["sem"]["auc"]))
+        auc_stats.append("p-value: {}".format(" // ".join(values_dict["p_val"]["auc"])))
         auc_stats.append("----------------------------------")
-        auc_stats.append("Mean specificity: {}".format(mean_spe))
-        auc_stats.append("SEM: {}".format(sem_spe))
-        auc_stats.append("p-value: {}".format(p_val_spe))
+        auc_stats.append("Mean specificity: {}".format(values_dict["mean"]["spe"]))
+        auc_stats.append("SEM: {}".format(values_dict["sem"]["spe"]))
+        auc_stats.append("p-value: {}".format(" // ".join(values_dict["p_val"]["spe"])))
         auc_stats.append("----------------------------------")
-        auc_stats.append("Mean sensibility: {}".format(mean_sen))
-        auc_stats.append("SEM: {}".format(sem_sen))
-        auc_stats.append("p-value: {}".format(p_val_sen))
+        auc_stats.append("Mean sensibility: {}".format(values_dict["mean"]["sen"]))
+        auc_stats.append("SEM: {}".format(values_dict["sem"]["sen"]))
+        auc_stats.append("p-value: {}".format(" // ".join(values_dict["p_val"]["sen"])))
 
         return render_template("performances_results.html", img_list = img_list, auc_stats = auc_stats)
     
