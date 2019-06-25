@@ -18,7 +18,7 @@
             <input type="checkbox" name="compare" value="{{each}}"> {{each}}<br>
         {% endfor %}
 
-        <input type = "submit" name = "submit_button" value = "One by one" />
+        <p><input type = "submit" name = "submit_button" value = "One by one" />
         <input type = "submit" name = "submit_button" value = "All in one" /></p>
 
         <h2>Already available comparisons</h2>
@@ -26,6 +26,7 @@
                 <input type="checkbox" name="comparisons" value="{{each}}"> {{each}}<br>
             {% endfor %}
 
+        <p><input type = "submit" name = "submit_button" value = "Delete" />
         <input type = "submit" name = "submit_button" value = "View" /></p>
     </form>
 </body>
