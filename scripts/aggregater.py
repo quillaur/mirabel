@@ -54,11 +54,14 @@ class Aggregator:
     def get_predictions(self, mirna: int):
         results_list_of_lists = []
         for db in self.db_list:
-            order = "ASC" if db in self.ascendant else "DESC"
-            predictions_list = utilities.get_predictions_for_mirna(self.config, db, mirna, order)
+            predictions_list = utilities.get_predictions_for_mirna(self.config, db, mirna)
             results_list_of_lists.append(predictions_list)
 
-        return results_list_of_lists
+        # Sort by score write results to file
+        order = False if db in self.ascendant else True
+        results_list_of_lists = sorted(lol_interactions, key=itemgetter(1), reverse=order)
+
+        return [elem[0] for elem in results_list_of_lists]
 
     def write_tmp_predictions_to_file(self, filename: str, predictions_lists: list):
         # Write results temporary in CSV so as to be aggregated with R

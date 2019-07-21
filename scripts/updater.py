@@ -11,6 +11,7 @@ import pandas
 import tarfile
 import lzma
 import sys
+import mysql.connector
 
 # Personal imports
 from scripts import utilities
@@ -348,7 +349,11 @@ class Updater:
                     "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s);".format(self.db_name)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
-        cursor.executemany(query, predictions_list)
+        try:
+            cursor.executemany(query, predictions_list)
+        except mysql.connector.errors.IntegrityError as e:
+            pass
+
         connection.commit()
         connection.close()
 

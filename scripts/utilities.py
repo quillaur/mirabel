@@ -150,16 +150,16 @@ def get_mirnas(config: dict, db_name: str):
     return results_set
 
 
-def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str, elem: str="GeneID"):
+def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, elem: str="GeneID"):
     connection = mysql_connection(config)
     if "Svmicro" in db_name:
-        query = "SELECT {} FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(elem, db_name, mirna, order)
+        query = "SELECT {}, Score FROM {} WHERE Mimat = {} AND Score > 0;".format(elem, db_name, mirna)
     else:
-        query = "SELECT {} FROM {} WHERE Mimat = {} ORDER BY Score {};".format(elem, db_name, mirna, order)
+        query = "SELECT {}, Score FROM {} WHERE Mimat = {} ;".format(elem, db_name, mirna)
     cursor = connection.cursor()
     cursor.execute(query)
 
-    results_list = [row[0] for row in cursor]
+    results_list = [[int(row[0]), float(row[1])] for row in cursor]
 
     connection.close()
 
