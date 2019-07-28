@@ -9,6 +9,7 @@ import csv
 from ast import literal_eval
 from progressbar import *
 import os
+from operator import itemgetter
 
 # Personal imports
 from scripts import utilities
@@ -59,7 +60,7 @@ class Aggregator:
 
         # Sort by score write results to file
         order = False if db in self.ascendant else True
-        results_list_of_lists = sorted(lol_interactions, key=itemgetter(1), reverse=order)
+        results_list_of_lists = sorted(results_list_of_lists, key=itemgetter(1), reverse=order)
 
         return [elem[0] for elem in results_list_of_lists]
 
@@ -125,6 +126,7 @@ class Aggregator:
 
         # Get common mirnas between all aggregated DB
         all_mirnas = self.get_mirnas_for_each_db()
+        logging.info("{} common miRNAs fetched.".format(len(all_mirnas)))
         logging.info("Aggregating predictions between given databases...")
 
         # Make aggregation for each miRNAs
