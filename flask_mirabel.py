@@ -531,9 +531,9 @@ def get_existing_comparisons():
         del db_compared[-1]
         if len(db_compared) > 1:
             db_compared = " and ".join(db_compared)
+            comparisons.append("{} vs {} and all in one = {}".format(db_list[0], db_compared, all_in_one))
         else:
-            db_compared = "{}".format(db_compared[0])
-        comparisons.append("{} vs {} and all in one = {}".format(db_list[0], db_compared, all_in_one))
+            comparisons.append("{} vs {} and all in one = {}".format(db_list[0], db_compared[0], all_in_one))
 
     return comparisons
 
