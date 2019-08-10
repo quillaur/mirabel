@@ -156,6 +156,7 @@ def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, elem: str=
         query = "SELECT {}, Score FROM {} WHERE Mimat = {} AND Score > 0;".format(elem, db_name, mirna)
     else:
         query = "SELECT {}, Score FROM {} WHERE Mimat = {} ;".format(elem, db_name, mirna)
+
     cursor = connection.cursor()
     cursor.execute(query)
 
@@ -175,14 +176,14 @@ def get_validated_interactions(config: dict):
     result_dico = defaultdict(list)
 
     for row in cursor:
-        result_dico[row[0]].append(row[1])
+        result_dico[int(row[0])].append(int(row[1]))
 
     query = "SELECT Mimat, GeneID FROM Mirecords;"
     cursor = connection.cursor()
     cursor.execute(query)
 
     for row in cursor:
-        result_dico[row[0]].append(row[1])
+        result_dico[int(row[0])].append(int(row[1]))
 
     connection.close()
 

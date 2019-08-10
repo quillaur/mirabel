@@ -38,31 +38,44 @@ class Aggregator:
 
     def get_mirnas_for_each_db(self):
         logging.info("Getting all miRNAs for these databases: {}...".format(self.db_list))
-        db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
+        # db_mirs_lists = [utilities.get_mirnas(self.config, db) for db in self.db_list]
 
-        # filename = "resources/tmp_mirna_list.txt"
+        # all_mirnas = list(set([mir for mir_group in db_mirs_lists for mir in mir_group]))
+
+        # # Keep only common miRNAs to all DB
+        # all_common_mirnas  = []
+        # for mirna in all_mirnas:
+        #     keep_in = True
+        #     for indice, value in enumerate(db_mirs_lists):
+        #         if mirna not in db_mirs_lists[indice]:
+        #             keep_in = False
+
+        #     if keep_in:
+        #         all_common_mirnas.append(mirna)
+
+        ##### For test purpose #####
+        filename = "resources/tmp_mirna_list.txt"
         # with open(filename, "w") as my_txt:
-        #     my_txt.write(str(db_mirs_lists))
+            # my_txt.write(str(all_common_mirnas))
 
-        # with open(filename, "r") as my_file:
-        #     handle = my_file.read()
-        #     db_mirs_lists = literal_eval(handle)
+        with open(filename, "r") as my_file:
+            handle = my_file.read()
+            all_common_mirnas = literal_eval(handle)
 
-        all_mirnas = list(set([mir for mir_group in db_mirs_lists for mir in mir_group]))
-
-        return all_mirnas
+        return all_common_mirnas
 
     def get_predictions(self, mirna: int):
         results_list_of_lists = []
         for db in self.db_list:
             predictions_list = utilities.get_predictions_for_mirna(self.config, db, mirna)
-            results_list_of_lists.append(predictions_list)
 
-        # Sort by score write results to file
-        order = False if db in self.ascendant else True
-        results_list_of_lists = sorted(results_list_of_lists, key=itemgetter(1), reverse=order)
+            # Sort by score write results to file
+            order = False if db in self.ascendant else True
+            predictions_list = sorted(predictions_list, key=itemgetter(1), reverse=order)
 
-        return [elem[0] for elem in results_list_of_lists]
+            results_list_of_lists.append([elem[0] for elem in predictions_list])
+
+        return results_list_of_lists
 
     def write_tmp_predictions_to_file(self, filename: str, predictions_lists: list):
         # Write results temporary in CSV so as to be aggregated with R

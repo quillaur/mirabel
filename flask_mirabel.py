@@ -359,7 +359,13 @@ def performances_results(db_name, db_comp, all_in_one):
 
         # ROC stats
         db = db_comp[0]
-        stats_file = os.path.join(perm_data_dir, "{}_{}_roc_results.txt".format(db_name, db))
+        stats_files_list = [os.path.join(perm_data_dir, file) for root, dirs, files in os.walk(perm_data_dir) for file in files]
+        
+        for file in stats_files_list:
+            if "_roc_results" in file:
+                stats_file = file
+                break
+
         if os.path.isfile(stats_file):
             with open(stats_file, "r") as my_file:
                 handle = my_file.read()
@@ -375,7 +381,11 @@ def performances_results(db_name, db_comp, all_in_one):
                         del elems[0]
                         p_roc_auc = " // ".join(elems)
 
-        stats_file = os.path.join(perm_data_dir, "{}_{}_pr_results.txt".format(db_name, db))
+        for file in stats_files_list:
+            if "_pr_results" in file:
+                stats_file = file
+                break
+
         f_score_res = {
             10: None,
             20: None,
@@ -415,7 +425,11 @@ def performances_results(db_name, db_comp, all_in_one):
         auc_stats.append("\t - 100%: {}".format(f_score_res[100]))
 
         # Random set statistics
-        stats_file = os.path.join(perm_data_dir, "{}_{}_stats_results.txt".format(db_name, db))
+        for file in stats_files_list:
+            if "_stats_results" in file:
+                stats_file = file
+                break
+
         values_dict = {
             "mean": {
                 "auc": None,
@@ -517,6 +531,8 @@ def get_existing_comparisons():
         del db_compared[-1]
         if len(db_compared) > 1:
             db_compared = " and ".join(db_compared)
+        else:
+            db_compared = "{}".format(db_compared[0])
         comparisons.append("{} vs {} and all in one = {}".format(db_list[0], db_compared, all_in_one))
 
     return comparisons

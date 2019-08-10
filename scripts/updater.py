@@ -142,7 +142,7 @@ class Updater:
                         continue
 
                 # Get the label
-                to_insert_dict["validated"] = "1" if to_insert_dict["gene_id"] in self.validated_interactions[to_insert_dict["Mimat"]] else "0"
+                to_insert_dict["validated"] = "1" if int(to_insert_dict["gene_id"]) in self.validated_interactions[int(to_insert_dict["Mimat"])] else "0"
 
                 yield to_insert_dict
 
