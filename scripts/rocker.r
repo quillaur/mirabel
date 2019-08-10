@@ -20,33 +20,6 @@ library("gplots")
 library("pROC")
 library("rowr")
 
-
-compute_pr = function(res_df)
-{
-	pr_df_0 = data.frame(val_number = res_df[1,2])
-	pr_df_0$precision = sum(res_df[1,2])
-	pr_df_0$recall = 0
-	pr_df_0$f_score = 0
-
-	for (x in 2:nrow(res_df))
-	{
-		pr_df_0[x,1] = sum(res_df[1:x,2])
-		pr_df_0[x,2] = pr_df_0[x,1] / x
-		pr_df_0[x,3] = pr_df_0[x,1] / sum(res_df[,2])
-
-		if(pr_df_0[x,3] > 0)
-		{
-			pr_df_0[x,4] = 2*((pr_df_0[x,2] * pr_df_0[x,3])/(pr_df_0[x,2] + pr_df_0[x,3]))
-		}
-		else
-	    {
-	        pr_df_0[x,4] = 0
-	    }
-	}
-
-	return(pr_df_0)
-}
-
 print("I am rocker.py !")
 ori_files_list = list.files("resources/tmp_roc_data")
 tmp_files_list = c()

@@ -11,6 +11,7 @@ import pandas
 import tarfile
 import lzma
 import sys
+import mysql.connector
 
 # Personal imports
 from scripts import utilities
@@ -141,7 +142,7 @@ class Updater:
                         continue
 
                 # Get the label
-                to_insert_dict["validated"] = "1" if to_insert_dict["gene_id"] in self.validated_interactions[to_insert_dict["Mimat"]] else "0"
+                to_insert_dict["validated"] = "1" if int(to_insert_dict["gene_id"]) in self.validated_interactions[int(to_insert_dict["Mimat"])] else "0"
 
                 yield to_insert_dict
 
@@ -342,13 +343,31 @@ class Updater:
                     "VALUES (%(Mimat)s, %(gene_id)s, %(experiment)s);".format(self.db_name)
         elif "Mirwalk" in self.db_name:
             query = "INSERT INTO {} (Mimat, GeneID, Score, Localisation, Validated) " \
-                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s, %(validated)s);".format(self.db_name)
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s, %(validated)s) " \
+                    "ON DUPLICATE KEY UPDATE Mimat = VALUES(Mimat), " \
+                    "GeneID = VALUES(GeneID), " \
+                    "Score = VALUES(Score), " \
+                    "Validated = VALUES(Validated), " \
+                    "Localisation = VALUES(Localisation);".format(self.db_name)
         else:
             query = "INSERT INTO {} (Mimat, GeneID, Score, Validated) " \
-                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s);".format(self.db_name)
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s) " \
+                    "ON DUPLICATE KEY UPDATE Mimat = VALUES(Mimat), " \
+                    "GeneID = VALUES(GeneID), " \
+                    "Score = VALUES(Score), " \
+                    "Validated = VALUES(Validated);".format(self.db_name)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
-        cursor.executemany(query, predictions_list)
+        try:
+            cursor.executemany(query, predictions_list)
+        except Exception as e:
+            self.logger.error("Insert ERROR: {}".format(e))
+            # for insert_dict in predictions_list:
+            #     try:
+            #         cursor.execute(query, insert_dict)
+            #     except mysql.connector.errors.IntegrityError as e:
+            #         pass
+
         connection.commit()
         connection.close()
 
@@ -363,8 +382,10 @@ class Updater:
 
         self.unknown_genes = list(set(self.unknown_genes))
         self.unknown_mirs = list(set(self.unknown_mirs))
-        self.logger.warning("{} miRs interactions could not be inserted because the miR is unknown in the database !".format(len(self.unknown_mirs)))
-        self.logger.warning("Exemples : {}".format(self.unknown_mirs[:100]))
-        self.logger.warning("{} miRs interactions could not be inserted because the gene symbol is unknown in the database !".format(len(self.unknown_genes)))
-        self.logger.warning("Exemples : {}".format(self.unknown_genes[:100]))
+        if self.unknown_mirs:
+            self.logger.warning("{} miRs interactions could not be inserted because the miR is unknown in the database !".format(len(self.unknown_mirs)))
+            self.logger.warning("Exemples : {}".format(self.unknown_mirs[:100]))
+        if self.unknown_genes:
+            self.logger.warning("{} miRs interactions could not be inserted because the gene symbol is unknown in the database !".format(len(self.unknown_genes)))
+            self.logger.warning("Exemples : {}".format(self.unknown_genes[:100]))
 
