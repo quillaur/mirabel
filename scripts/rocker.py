@@ -171,7 +171,7 @@ class Rocker:
         lol_interactions = sorted(lol_interactions, key=itemgetter(0), reverse=descending)
 
         # Limit to 1M interactions because of computer resources (on PR AUC calculation)
-        lol_interactions = lol_interactions[:1000000]
+        lol_interactions = lol_interactions[:500000]
 
         return lol_interactions
 
@@ -250,8 +250,8 @@ class Rocker:
             # Sort by score write results to file
             logging.info("{} common interactions found for {}.".format(count, self.all_db))
             logging.info("Within these common interactions, {} are validated ones.".format(count_val))
-            if count > 1000000:
-                logging.warning("Due to resource limitations, only the first 1M interactions will be used for comparison.")
+            if count > 500000:
+                logging.warning("Due to resource limitations, only the first 500K interactions will be used for comparison.")
             logging.info("Sort interactions by score...")
             lol_interactions = self.sort_by_score(reformated_scores_dict[self.db_main], descending=False)
             # compute precision / recall / f-score

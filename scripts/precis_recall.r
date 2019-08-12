@@ -73,7 +73,7 @@ for (file in tmp_files_list)
 	}
 	db_number = db_number + 1
 
-	auc.pr_df= auc(pr_df$recall, pr_df$precision)
+	auc.pr_df = auc(pr_df$recall, pr_df$precision)
 	AUC = data.frame(res0 = auc.pr_df)
 	all_auc = cbind.fill(all_auc, AUC, fill = NA)
 	# Rename column

@@ -382,7 +382,7 @@ def performances_results(db_name, db_comp, all_in_one):
                         p_roc_auc = " // ".join(elems)
 
         for file in stats_files_list:
-            if "_pr_results" in file:
+            if "_pr_results" in file and "stats" not in file:
                 stats_file = file
                 break
 
