@@ -71,7 +71,7 @@ class Aggregator:
 
             if predictions_list:
 	            # Sort by score write results to file
-	            order = False if db in self.ascendant else True
+	            order = False if db in self.ascendant or "Mirabel" in db else True
 	            predictions_list = sorted(predictions_list, key=itemgetter(1), reverse=order)
 
 	            results_list_of_lists.append([elem[0] for elem in predictions_list])

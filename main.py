@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # db_name must start with a capitalized letter followed by non-capitalized letters
     # (same as the corresponding SQL tables).
     # By default, all databases are used.
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget", "Rna22", "Mirdip"]
 
     # Check database requested by user is available:
     is_in_list = True

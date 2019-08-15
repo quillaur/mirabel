@@ -102,9 +102,9 @@ all_auc$init = NULL
 all_pauc$init = NULL
 result_file = paste("resources/", db_name_list[1], "_", db_name_list[2], "_roc_results.txt", sep = "")
 sink(result_file)
-print(head(all_auc))
-print(head(all_pauc))
+print(all_auc)
+print(all_pauc)
 sink()
 
-print(head(all_auc))
-print(head(all_pauc))
+print(all_auc)
+print(all_pauc)

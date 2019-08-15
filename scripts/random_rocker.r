@@ -46,8 +46,8 @@ all_auc = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE)
 all_pauc = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE) 
 all_specif = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE)
 all_sensi = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE)
-increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
+# increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
+# decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 
 for (db_name in db_name_list)
 {

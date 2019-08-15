@@ -171,6 +171,9 @@ def performances_results(db_name, db_comp, all_in_one):
     perm_img_dir = os.path.join("static/already_done_comparisons", "{}_vs_{}_{}".format(db_name, formated_comp_db, all_in_one))
     crop_perm_img_dir = perm_img_dir.replace("static/", "")
 
+    img_list = [os.path.join(crop_perm_img_dir, file) for root, dirs, files in os.walk(perm_img_dir) for file in files]
+
+
     all_in_one = True if all_in_one == "True" else False
     if not all_in_one:
         img_list = [os.path.join(crop_perm_img_dir, "{}_{}_roc.jpg".format(db_name, db_compared)) for db_compared in db_comp]
@@ -350,13 +353,6 @@ def performances_results(db_name, db_comp, all_in_one):
 
         return render_template("performances_results.html", img_list = img_list, auc_stats = auc_stats)
     else:
-        img_list = []
-        for db_compared in db_comp:
-            img_list.append(os.path.join(crop_perm_img_dir, "{}_{}_roc.jpg".format(db_name, db_compared)))
-            img_list.append(os.path.join(crop_perm_img_dir, "{}_{}_pr.jpg".format(db_name, db_compared)))
-            img_list.append(os.path.join(crop_perm_img_dir, "{}_{}_f_score.jpg".format(db_name, db_compared)))
-            break
-
         # ROC stats
         db = db_comp[0]
         stats_files_list = [os.path.join(perm_data_dir, file) for root, dirs, files in os.walk(perm_data_dir) for file in files]
@@ -371,15 +367,20 @@ def performances_results(db_name, db_comp, all_in_one):
                 handle = my_file.read()
                 lines = handle.split("\n")
                 for i, line in enumerate(lines):
-                    if i == 1:
+                    if i == 0:
+                        header = [x for x in line.split(" ") if x != ""]
+                        # Need to order properly results according to comparisons made
+                        ordered_indices = [header.index(db_name)]
+                        ordered_indices.extend(header.index(db) for db in db_comp)
+                    elif i == 1:
                         elems = [x for x in line.split(" ") if x != ""]
                         del elems[0]
-                        roc_auc = " // ".join(elems)
+                        roc_auc = " // ".join(reordering_list(elems, ordered_indices))
 
                     elif i == 3:
                         elems = [x for x in line.split(" ") if x != ""]
                         del elems[0]
-                        p_roc_auc = " // ".join(elems)
+                        p_roc_auc = " // ".join(reordering_list(elems, ordered_indices))
 
         for file in stats_files_list:
             if "_pr_results" in file and "stats" not in file:
@@ -400,13 +401,13 @@ def performances_results(db_name, db_comp, all_in_one):
                     if i == 1:
                         elems = [x for x in line.split(" ") if x != ""]
                         del elems[0]
-                        pr_auc = " // ".join(elems)
+                        pr_auc = " // ".join(reordering_list(elems, ordered_indices))
 
                     elif i > 9:
                         elems = [item for item in line.split(" ") if item != ""]
                         if elems:
                             percent = int(elems[1].replace("%", ""))
-                            f_score_res[percent] = " // ".join(elems[2:])
+                            f_score_res[percent] = " // ".join(reordering_list(elems[2:], ordered_indices))
 
         auc_stats = []
         auc_stats.append("##################################")
@@ -457,21 +458,21 @@ def performances_results(db_name, db_comp, all_in_one):
                         elems = [item for item in line.split(" ") if item != ""]
                         del elems[:2]
                         if not values_dict["mean"]["auc"]:
-                            values_dict["mean"]["auc"] = " // ".join(elems)
+                            values_dict["mean"]["auc"] = " // ".join(reordering_list(elems, ordered_indices))
                         elif not values_dict["mean"]["spe"]:
-                            values_dict["mean"]["spe"] = " // ".join(elems)
+                            values_dict["mean"]["spe"] = " // ".join(reordering_list(elems, ordered_indices))
                         elif not values_dict["mean"]["sen"]:
-                            values_dict["mean"]["sen"] = " // ".join(elems)
+                            values_dict["mean"]["sen"] = " // ".join(reordering_list(elems, ordered_indices))
                     elif "SEM" in line:
                         line = line.replace('"', '')
                         elems = [item for item in line.split(" ") if item != ""]
                         del elems[:2]
                         if not values_dict["sem"]["auc"]:
-                            values_dict["sem"]["auc"] = " // ".join(elems)
+                            values_dict["sem"]["auc"] = " // ".join(reordering_list(elems, ordered_indices))
                         elif not values_dict["sem"]["spe"]:
-                            values_dict["sem"]["spe"] = " // ".join(elems)
+                            values_dict["sem"]["spe"] = " // ".join(reordering_list(elems, ordered_indices))
                         elif not values_dict["sem"]["sen"]:
-                            values_dict["sem"]["sen"] = " // ".join(elems)
+                            values_dict["sem"]["sen"] = " // ".join(reordering_list(elems, ordered_indices))
                     elif "p-value" in line:
                         if len(values_dict["p_val"]["auc"]) < len(db_comp):
                             values_dict["p_val"]["auc"].append([item for item in line.split(" ") if item != ""][-1])
@@ -536,6 +537,10 @@ def get_existing_comparisons():
             comparisons.append("{} vs {} and all in one = {}".format(db_list[0], db_compared[0], all_in_one))
 
     return comparisons
+
+def reordering_list(unordered_list: list, index_list: list):
+    return [unordered_list[i] for i in index_list]
+
 
 if __name__ == '__main__':
     app.run(debug=True)

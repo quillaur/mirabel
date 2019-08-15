@@ -59,7 +59,7 @@ class Rocker:
 
     def make_pr(self):
         subprocess.call("scripts/precis_recall.r")
-        subprocess.call("scripts/random_pr.r")
+        # subprocess.call("scripts/random_pr.r")
 
     def get_scores_and_labels(self, db: str, mirna_list: list):
         mirna_list = ", ".join([str(mirna_id) for mirna_id in mirna_list])
@@ -99,7 +99,7 @@ class Rocker:
             sub += 1
 
             # Sort by score write results to file
-            order = False if db_name in self.ascendant else True
+            order = False if db_name in self.ascendant or "Mirabel" in db_name else True
             lol_interactions = self.sort_by_score(sub_dict[db_name], descending=order)
             # compute precision / recall / f-score
             lol_interactions = self.compute_precision_recall(lol_interactions)
@@ -279,7 +279,7 @@ class Rocker:
                                     }
                 
                 # Sort by score write results to file
-                order = False if db in self.ascendant else True
+                order = False if db in self.ascendant or "Mirabel" in db else True
                 lol_interactions = self.sort_by_score(reformated_scores_dict[db], descending=order)
                 # compute precision / recall / f-score
                 lol_interactions = self.compute_precision_recall(lol_interactions)
