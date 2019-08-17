@@ -33,9 +33,6 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--list', nargs='*',
                         help='Pass the list of databases you wish to aggregate. Default is empty list (but all DB later).',
                         default=[])
-    parser.add_argument('-lc', '--list-compare', nargs='*',
-                        help='Pass the list of databases you wish to compare to the aggregated ones. Default is empty list.',
-                        default=[])
     args = parser.parse_args()
 
     # db_name must start with a capitalized letter followed by non-capitalized letters

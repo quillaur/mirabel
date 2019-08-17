@@ -92,7 +92,7 @@ def aggregate_results(db_name, databases):
 
 @app.route('/compare_performances', methods=["GET", "POST"])
 def compare_performances():
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget", "Rna22", "Mirdip"]
     # existing_mirabels is a list of lists
     mirabels = utilities.get_existing_mirabels()
 

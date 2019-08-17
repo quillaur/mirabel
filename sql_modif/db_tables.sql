@@ -152,6 +152,24 @@ CREATE TABLE IF NOT EXISTS Exprtarget(
 	PRIMARY KEY (IdExprtarget)
 );
 
+CREATE TABLE IF NOT EXISTS Rna22(
+    IdRna22 INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
+	PRIMARY KEY (IdRna22)
+);
+
+CREATE TABLE IF NOT EXISTS Mirdip(
+    IdMirdip INT UNSIGNED AUTO_INCREMENT,
+	Mimat int(11) NOT NULL,
+	GeneID int(11) NOT NULL,
+	Score FLOAT,
+	Validated ENUM("0", "1") DEFAULT "0",
+	PRIMARY KEY (IdMirdip)
+);
+
 CREATE UNIQUE INDEX unique_mir_gene
 ON Exprtarget(Mimat, GeneID);
 

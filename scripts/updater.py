@@ -86,13 +86,19 @@ class Updater:
             if count == 1:
                 if "Mirdb" in self.db_name:
                     header = ["mirna_name", "", "score", "gene_id"]
+                elif "Rna22" in self.db_name:
+                    header = ["mirna_name", "gene_id"]
+                    header.extend([""]*13)
+                    header.extend("score")
+                elif "Mirdip" in self.db_name:
+                    header = ["gene_symbol", "mirna_name", "", "score"]
                 else:
                     # Comir has wierd '"' symbol stuck around each word
                     header = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
                 
                 continue
 
-            parsed_data = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+            parsed_data = line.decode("utf-8").replace("\n", "").replace("\"", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
 
             if "Comir" in self.db_name or "Exprtarget" in self.db_name:
                 del parsed_data[0]
@@ -134,7 +140,7 @@ class Updater:
                     self.unknown_mirs.append(mir_name)
                     continue
 
-                if not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
+                if not "gene_id" in to_insert_dict or not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
                     if to_insert_dict["gene_symbol"] in self.gene_dico:
                         to_insert_dict["gene_id"] = self.gene_dico[to_insert_dict["gene_symbol"]]
                     else:
