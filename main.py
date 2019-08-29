@@ -21,7 +21,7 @@ if __name__ == '__main__':
     startTime = datetime.now()
 
     # Set logging module
-    logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
     # Set project config
     config = utilities.extract_config()

@@ -37,7 +37,7 @@ class Rocker:
         self.config = utilities.extract_config()
 
         # Variables
-        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel"]
+        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel", "Rna22"]
         self.db_main = db_main
         self.db_comp = db_compare
         self.all_db = [db_main]

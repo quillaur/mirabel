@@ -45,6 +45,11 @@ class Updater:
         self.unknown_genes = []
         self.validated_interactions = utilities.get_validated_interactions(self.config)
 
+        # Module to convert ensemble ID necessary for RNA22
+        if "Rna22" in self.db_name:
+            
+            self.gene_ensemble_list = []
+
         # File paths
         if "Svmicro" in self.db_name or "Mbstar" in self.db_name:
             self.dir_name = self.config[self.db_name.upper()]["SAVE FILE TO"]
@@ -87,9 +92,9 @@ class Updater:
                 if "Mirdb" in self.db_name:
                     header = ["mirna_name", "", "score", "gene_id"]
                 elif "Rna22" in self.db_name:
-                    header = ["mirna_name", "gene_id"]
+                    header = ["mirna_name", "gene_symbol"]
                     header.extend([""]*13)
-                    header.extend("score")
+                    header.append("score")
                 elif "Mirdip" in self.db_name:
                     header = ["gene_symbol", "mirna_name", "", "score"]
                 else:
@@ -125,6 +130,12 @@ class Updater:
                         to_insert_dict["localisation"] = "5UTR"
                     else:
                         to_insert_dict["localisation"] = "CDS"
+
+                elif "Rna22" in self.db_name:
+                    to_insert_dict["mirna_name"] = to_insert_dict["mirna_name"].replace("_", "-")
+                    to_insert_dict["gene_symbol"] = to_insert_dict["gene_symbol"].split("_")[0]
+                    to_insert_dict["gene_id"] = 1
+                    self.gene_ensemble_list.append(to_insert_dict["gene_symbol"])
 
                 # Reformat for insert
                 if "." in to_insert_dict["mirna_name"]:
@@ -237,7 +248,19 @@ class Updater:
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
                                                     species=self.species):
                     predictions_list.append(insert_dict)
+
                     if len(predictions_list) > 1000:
+                        # If RNA22, gene IDs need to be converted
+                        if "Rna22" in self.db_name:
+                            converted_dict = self.convert_gene_ids(self.gene_ensemble_list)
+                            tmp_list = []
+                            for to_insert_dict in predictions_list:
+                                if to_insert_dict["gene_symbol"] in converted_dict:
+                                    to_insert_dict["gene_id"] = converted_dict[to_insert_dict["gene_symbol"]]
+                                    tmp_list.append(to_insert_dict)
+                            self.gene_ensemble_list = []
+                            predictions_list = tmp_list
+
                         self.insert_into_db(predictions_list)
                         predictions_list = []
 

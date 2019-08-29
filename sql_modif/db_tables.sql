@@ -161,6 +161,9 @@ CREATE TABLE IF NOT EXISTS Rna22(
 	PRIMARY KEY (IdRna22)
 );
 
+CREATE UNIQUE INDEX unique_mir_gene
+ON Rna22(Mimat, GeneID);
+
 CREATE TABLE IF NOT EXISTS Mirdip(
     IdMirdip INT UNSIGNED AUTO_INCREMENT,
 	Mimat int(11) NOT NULL,
@@ -169,6 +172,9 @@ CREATE TABLE IF NOT EXISTS Mirdip(
 	Validated ENUM("0", "1") DEFAULT "0",
 	PRIMARY KEY (IdMirdip)
 );
+
+CREATE UNIQUE INDEX unique_mir_gene
+ON Mirdip(Mimat, GeneID);
 
 CREATE UNIQUE INDEX unique_mir_gene
 ON Exprtarget(Mimat, GeneID);
@@ -187,3 +193,6 @@ CREATE TABLE IF NOT EXISTS ExistingMirabel(
 
 alter table ExistingMirabel add Mbstar ENUM("0", "1") DEFAULT "0";
 alter table ExistingMirabel add Exprtarget ENUM("0", "1") DEFAULT "0";
+
+CREATE UNIQUE INDEX unique_gene_id
+ON genes3(ncbi_gene_id);
