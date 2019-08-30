@@ -117,7 +117,7 @@ def get_mirna_conversion_info(config: dict):
 
 def get_gene_conversion_info(config: dict):
     connection = mysql_connection(config)
-    query = "SELECT ncbi_gene_id, description, preferredGeneSymbol FROM genes3;"
+    query = "SELECT ncbi_gene_id, description, preferredGeneSymbol, EnsembleID FROM genes3;"
     cursor = connection.cursor()
     cursor.execute(query)
 
@@ -128,6 +128,8 @@ def get_gene_conversion_info(config: dict):
             gene_names = row[1].split(" ")
 
         gene_names.append(row[2])
+        if row[3]:
+            gene_names.append(str(row[3]))
         gene_names = list(set(gene_names))
         for name in gene_names:
             result_dico[name] = row[0]

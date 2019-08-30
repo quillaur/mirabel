@@ -134,8 +134,7 @@ class Updater:
                 elif "Rna22" in self.db_name:
                     to_insert_dict["mirna_name"] = to_insert_dict["mirna_name"].replace("_", "-")
                     to_insert_dict["gene_symbol"] = to_insert_dict["gene_symbol"].split("_")[0]
-                    to_insert_dict["gene_id"] = 1
-                    self.gene_ensemble_list.append(to_insert_dict["gene_symbol"])
+                    # self.gene_ensemble_list.append(to_insert_dict["gene_symbol"])
 
                 # Reformat for insert
                 if "." in to_insert_dict["mirna_name"]:
@@ -156,11 +155,11 @@ class Updater:
                         to_insert_dict["gene_id"] = self.gene_dico[to_insert_dict["gene_symbol"]]
                     else:
                         self.unknown_genes.append(to_insert_dict["gene_symbol"])
+                        # print("Issue with GS: {}".format(to_insert_dict))
                         continue
 
                 # Get the label
                 to_insert_dict["validated"] = "1" if int(to_insert_dict["gene_id"]) in self.validated_interactions[int(to_insert_dict["Mimat"])] else "0"
-
                 yield to_insert_dict
 
             else:
@@ -251,15 +250,15 @@ class Updater:
 
                     if len(predictions_list) > 1000:
                         # If RNA22, gene IDs need to be converted
-                        if "Rna22" in self.db_name:
-                            converted_dict = self.convert_gene_ids(self.gene_ensemble_list)
-                            tmp_list = []
-                            for to_insert_dict in predictions_list:
-                                if to_insert_dict["gene_symbol"] in converted_dict:
-                                    to_insert_dict["gene_id"] = converted_dict[to_insert_dict["gene_symbol"]]
-                                    tmp_list.append(to_insert_dict)
-                            self.gene_ensemble_list = []
-                            predictions_list = tmp_list
+                        # if "Rna22" in self.db_name:
+                        #     converted_dict = self.convert_gene_ids(self.gene_ensemble_list)
+                        #     tmp_list = []
+                        #     for to_insert_dict in predictions_list:
+                        #         if to_insert_dict["gene_symbol"] in converted_dict:
+                        #             to_insert_dict["gene_id"] = converted_dict[to_insert_dict["gene_symbol"]]
+                        #             tmp_list.append(to_insert_dict)
+                        #     self.gene_ensemble_list = []
+                        #     predictions_list = tmp_list
 
                         self.insert_into_db(predictions_list)
                         predictions_list = []
