@@ -43,8 +43,8 @@ for (file in ori_files_list)
 # print(tmp_files_list)
 all_auc = data.frame()
 all_pauc = data.frame()
-increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
+# increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel", "Rna22")
+# decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 colors = c("darkgreen", "black", "blue", "orange", "red")
 auc_print_int = c(0.5, 0.4, 0.3, 0.2, 0.1)
 
@@ -58,11 +58,11 @@ for (file in tmp_files_list) {
 	print(file)
 	res0 = read.table(file, header = TRUE, sep = ";")
 
-	if (db_name %in% decreasing) {
-		res0 = res0[order(res0$score, decreasing = TRUE),]
-	} else {
-		res0 = res0[order(res0$score, decreasing = FALSE),]
-	}
+	# if (db_name %in% decreasing) {
+	# 	res0 = res0[order(res0$score, decreasing = TRUE),]
+	# } else {
+	# 	res0 = res0[order(res0$score, decreasing = FALSE),]
+	# }
 
 	# print(head(res0))
 

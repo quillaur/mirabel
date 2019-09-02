@@ -32,7 +32,7 @@ class Aggregator:
         self.config = utilities.extract_config()
 
         # Variables
-        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel"]
+        self.ascendant = ["Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel", "Rna22"]
         self.db_list = db_list
         self.validated_interactions = utilities.get_validated_interactions(self.config)
 
@@ -157,5 +157,8 @@ class Aggregator:
             self.make_aggregation()
             self.update_mirabel(mirna, db_name)
         pbar.finish()
+
+        # Add this new miRabel to tracking table
+        utilities.insert_to_existing_mirabels(db_name, self.db_list)
 
         logging.info("Aggregation done.")
