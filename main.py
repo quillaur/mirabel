@@ -21,7 +21,7 @@ if __name__ == '__main__':
     startTime = datetime.now()
 
     # Set logging module
-    logging.basicConfig(level="DEBUG", format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(level="INFO", format="%(asctime)s - %(levelname)s - %(message)s")
 
     # Set project config
     config = utilities.extract_config()
@@ -33,15 +33,12 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--list', nargs='*',
                         help='Pass the list of databases you wish to aggregate. Default is empty list (but all DB later).',
                         default=[])
-    parser.add_argument('-lc', '--list-compare', nargs='*',
-                        help='Pass the list of databases you wish to compare to the aggregated ones. Default is empty list.',
-                        default=[])
     args = parser.parse_args()
 
     # db_name must start with a capitalized letter followed by non-capitalized letters
     # (same as the corresponding SQL tables).
     # By default, all databases are used.
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Mirtarbase", "Mirecords", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget", "Rna22", "Mirdip"]
 
     # Check database requested by user is available:
     is_in_list = True

@@ -46,8 +46,8 @@ all_auc = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE)
 all_pauc = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE) 
 all_specif = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE)
 all_sensi = data.frame(res0=c(), res1=c(), stringsAsFactors=FALSE)
-increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
+# increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
+# decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 
 for (db_name in db_name_list)
 {
@@ -66,6 +66,11 @@ for (db_name in db_name_list)
 		auc.res0 = auc(roc.res0)
 		tmp_AUC = data.frame(res0=auc.res0, stringsAsFactors=FALSE)
 		AUC = rbind(AUC, tmp_AUC)
+
+		# Plot curve
+		# jpeg(paste("static/", db_name, "_random_", i, "_roc.jpg", sep = ""), width = 8, height = 8, units = 'in', res = 300)
+		# plot(roc.res0, type="l", col= "black")
+		# dev.off()
 
 		# Partial AUC
 		p.auc.res0 = auc(roc.res0, partial.auc=c(1,0.9), partial.auc.focus=c("specificity"))
@@ -126,5 +131,8 @@ compute_stats(all_auc)
 # compute_stats(all_pauc)
 compute_stats(all_specif)
 compute_stats(all_sensi)
+print(all_auc)
+print(all_specif)
+print(all_sensi)
 sink()
 print("I am done. Random rocker out.")

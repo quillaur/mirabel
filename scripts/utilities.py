@@ -117,7 +117,7 @@ def get_mirna_conversion_info(config: dict):
 
 def get_gene_conversion_info(config: dict):
     connection = mysql_connection(config)
-    query = "SELECT ncbi_gene_id, description, preferredGeneSymbol FROM genes3;"
+    query = "SELECT ncbi_gene_id, description, preferredGeneSymbol, EnsembleID FROM genes3;"
     cursor = connection.cursor()
     cursor.execute(query)
 
@@ -128,6 +128,8 @@ def get_gene_conversion_info(config: dict):
             gene_names = row[1].split(" ")
 
         gene_names.append(row[2])
+        if row[3]:
+            gene_names.append(str(row[3]))
         gene_names = list(set(gene_names))
         for name in gene_names:
             result_dico[name] = row[0]
@@ -150,16 +152,17 @@ def get_mirnas(config: dict, db_name: str):
     return results_set
 
 
-def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, order: str, elem: str="GeneID"):
+def get_predictions_for_mirna(config: dict, db_name: str, mirna: int, elem: str="GeneID"):
     connection = mysql_connection(config)
     if "Svmicro" in db_name:
-        query = "SELECT {} FROM {} WHERE Mimat = {} AND Score > 0 ORDER BY Score {};".format(elem, db_name, mirna, order)
+        query = "SELECT {}, Score FROM {} WHERE Mimat = {} AND Score > 0;".format(elem, db_name, mirna)
     else:
-        query = "SELECT {} FROM {} WHERE Mimat = {} ORDER BY Score {};".format(elem, db_name, mirna, order)
+        query = "SELECT {}, Score FROM {} WHERE Mimat = {} ;".format(elem, db_name, mirna)
+
     cursor = connection.cursor()
     cursor.execute(query)
 
-    results_list = [row[0] for row in cursor]
+    results_list = [[int(row[0]), float(row[1])] for row in cursor]
 
     connection.close()
 
@@ -175,14 +178,14 @@ def get_validated_interactions(config: dict):
     result_dico = defaultdict(list)
 
     for row in cursor:
-        result_dico[row[0]].append(row[1])
+        result_dico[int(row[0])].append(int(row[1]))
 
     query = "SELECT Mimat, GeneID FROM Mirecords;"
     cursor = connection.cursor()
     cursor.execute(query)
 
     for row in cursor:
-        result_dico[row[0]].append(row[1])
+        result_dico[int(row[0])].append(int(row[1]))
 
     connection.close()
 

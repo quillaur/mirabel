@@ -11,7 +11,8 @@ InsPack = function(pack)
 		# print(paste(pack," already installed"))
 	}
 } 
-InsPack("RobustRankAggreg")
+# InsPack("RobustRankAggreg")
+library("methods")
 library("RobustRankAggreg")
 
 data = read.csv("resources/tmp_predictions_lists.csv", header = TRUE, sep = ";")

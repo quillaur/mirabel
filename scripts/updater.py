@@ -11,6 +11,7 @@ import pandas
 import tarfile
 import lzma
 import sys
+import mysql.connector
 
 # Personal imports
 from scripts import utilities
@@ -43,6 +44,11 @@ class Updater:
         self.unknown_mirs = []
         self.unknown_genes = []
         self.validated_interactions = utilities.get_validated_interactions(self.config)
+
+        # Module to convert ensemble ID necessary for RNA22
+        if "Rna22" in self.db_name:
+            
+            self.gene_ensemble_list = []
 
         # File paths
         if "Svmicro" in self.db_name or "Mbstar" in self.db_name:
@@ -85,13 +91,19 @@ class Updater:
             if count == 1:
                 if "Mirdb" in self.db_name:
                     header = ["mirna_name", "", "score", "gene_id"]
+                elif "Rna22" in self.db_name:
+                    header = ["mirna_name", "gene_symbol"]
+                    header.extend([""]*13)
+                    header.append("score")
+                elif "Mirdip" in self.db_name:
+                    header = ["gene_symbol", "mirna_name", "", "score"]
                 else:
                     # Comir has wierd '"' symbol stuck around each word
                     header = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
                 
                 continue
 
-            parsed_data = line.decode("utf-8").replace("\n", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
+            parsed_data = line.decode("utf-8").replace("\n", "").replace("\"", "").split(separator) if decode else line.replace("\n", "").replace("\"", "").split(separator)
 
             if "Comir" in self.db_name or "Exprtarget" in self.db_name:
                 del parsed_data[0]
@@ -119,6 +131,11 @@ class Updater:
                     else:
                         to_insert_dict["localisation"] = "CDS"
 
+                elif "Rna22" in self.db_name:
+                    to_insert_dict["mirna_name"] = to_insert_dict["mirna_name"].replace("_", "-")
+                    to_insert_dict["gene_symbol"] = to_insert_dict["gene_symbol"].split("_")[0]
+                    # self.gene_ensemble_list.append(to_insert_dict["gene_symbol"])
+
                 # Reformat for insert
                 if "." in to_insert_dict["mirna_name"]:
                     mir_name = to_insert_dict["mirna_name"].split(".")[0]
@@ -133,16 +150,16 @@ class Updater:
                     self.unknown_mirs.append(mir_name)
                     continue
 
-                if not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
+                if not "gene_id" in to_insert_dict or not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
                     if to_insert_dict["gene_symbol"] in self.gene_dico:
                         to_insert_dict["gene_id"] = self.gene_dico[to_insert_dict["gene_symbol"]]
                     else:
                         self.unknown_genes.append(to_insert_dict["gene_symbol"])
+                        # print("Issue with GS: {}".format(to_insert_dict))
                         continue
 
                 # Get the label
-                to_insert_dict["validated"] = "1" if to_insert_dict["gene_id"] in self.validated_interactions[to_insert_dict["Mimat"]] else "0"
-
+                to_insert_dict["validated"] = "1" if int(to_insert_dict["gene_id"]) in self.validated_interactions[int(to_insert_dict["Mimat"])] else "0"
                 yield to_insert_dict
 
             else:
@@ -230,7 +247,19 @@ class Updater:
                                                     mir_col=int(self.config[self.db_name.upper()]["MIR_NAME_COL"]),
                                                     species=self.species):
                     predictions_list.append(insert_dict)
+
                     if len(predictions_list) > 1000:
+                        # If RNA22, gene IDs need to be converted
+                        # if "Rna22" in self.db_name:
+                        #     converted_dict = self.convert_gene_ids(self.gene_ensemble_list)
+                        #     tmp_list = []
+                        #     for to_insert_dict in predictions_list:
+                        #         if to_insert_dict["gene_symbol"] in converted_dict:
+                        #             to_insert_dict["gene_id"] = converted_dict[to_insert_dict["gene_symbol"]]
+                        #             tmp_list.append(to_insert_dict)
+                        #     self.gene_ensemble_list = []
+                        #     predictions_list = tmp_list
+
                         self.insert_into_db(predictions_list)
                         predictions_list = []
 
@@ -342,13 +371,31 @@ class Updater:
                     "VALUES (%(Mimat)s, %(gene_id)s, %(experiment)s);".format(self.db_name)
         elif "Mirwalk" in self.db_name:
             query = "INSERT INTO {} (Mimat, GeneID, Score, Localisation, Validated) " \
-                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s, %(validated)s);".format(self.db_name)
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(localisation)s, %(validated)s) " \
+                    "ON DUPLICATE KEY UPDATE Mimat = VALUES(Mimat), " \
+                    "GeneID = VALUES(GeneID), " \
+                    "Score = VALUES(Score), " \
+                    "Validated = VALUES(Validated), " \
+                    "Localisation = VALUES(Localisation);".format(self.db_name)
         else:
             query = "INSERT INTO {} (Mimat, GeneID, Score, Validated) " \
-                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s);".format(self.db_name)
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s) " \
+                    "ON DUPLICATE KEY UPDATE Mimat = VALUES(Mimat), " \
+                    "GeneID = VALUES(GeneID), " \
+                    "Score = VALUES(Score), " \
+                    "Validated = VALUES(Validated);".format(self.db_name)
         connection = utilities.mysql_connection(self.config)
         cursor = connection.cursor()
-        cursor.executemany(query, predictions_list)
+        try:
+            cursor.executemany(query, predictions_list)
+        except Exception as e:
+            self.logger.error("Insert ERROR: {}".format(e))
+            # for insert_dict in predictions_list:
+            #     try:
+            #         cursor.execute(query, insert_dict)
+            #     except mysql.connector.errors.IntegrityError as e:
+            #         pass
+
         connection.commit()
         connection.close()
 
@@ -363,8 +410,10 @@ class Updater:
 
         self.unknown_genes = list(set(self.unknown_genes))
         self.unknown_mirs = list(set(self.unknown_mirs))
-        self.logger.warning("{} miRs interactions could not be inserted because the miR is unknown in the database !".format(len(self.unknown_mirs)))
-        self.logger.warning("Exemples : {}".format(self.unknown_mirs[:100]))
-        self.logger.warning("{} miRs interactions could not be inserted because the gene symbol is unknown in the database !".format(len(self.unknown_genes)))
-        self.logger.warning("Exemples : {}".format(self.unknown_genes[:100]))
+        if self.unknown_mirs:
+            self.logger.warning("{} miRs interactions could not be inserted because the miR is unknown in the database !".format(len(self.unknown_mirs)))
+            self.logger.warning("Exemples : {}".format(self.unknown_mirs[:100]))
+        if self.unknown_genes:
+            self.logger.warning("{} miRs interactions could not be inserted because the gene symbol is unknown in the database !".format(len(self.unknown_genes)))
+            self.logger.warning("Exemples : {}".format(self.unknown_genes[:100]))
 

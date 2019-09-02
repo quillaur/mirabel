@@ -20,33 +20,6 @@ library("gplots")
 library("pROC")
 library("rowr")
 
-
-compute_pr = function(res_df)
-{
-	pr_df_0 = data.frame(val_number = res_df[1,2])
-	pr_df_0$precision = sum(res_df[1,2])
-	pr_df_0$recall = 0
-	pr_df_0$f_score = 0
-
-	for (x in 2:nrow(res_df))
-	{
-		pr_df_0[x,1] = sum(res_df[1:x,2])
-		pr_df_0[x,2] = pr_df_0[x,1] / x
-		pr_df_0[x,3] = pr_df_0[x,1] / sum(res_df[,2])
-
-		if(pr_df_0[x,3] > 0)
-		{
-			pr_df_0[x,4] = 2*((pr_df_0[x,2] * pr_df_0[x,3])/(pr_df_0[x,2] + pr_df_0[x,3]))
-		}
-		else
-	    {
-	        pr_df_0[x,4] = 0
-	    }
-	}
-
-	return(pr_df_0)
-}
-
 print("I am rocker.py !")
 ori_files_list = list.files("resources/tmp_roc_data")
 tmp_files_list = c()
@@ -70,8 +43,8 @@ for (file in ori_files_list)
 # print(tmp_files_list)
 all_auc = data.frame()
 all_pauc = data.frame()
-increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel")
-decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
+# increasing = c("Targetscan", "Miranda", "Pita", "Mirmap", "Mirabel", "Rna22")
+# decreasing = c("Svmicro", "Comir", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget")
 colors = c("darkgreen", "black", "blue", "orange", "red")
 auc_print_int = c(0.5, 0.4, 0.3, 0.2, 0.1)
 
@@ -85,11 +58,11 @@ for (file in tmp_files_list) {
 	print(file)
 	res0 = read.table(file, header = TRUE, sep = ";")
 
-	if (db_name %in% decreasing) {
-		res0 = res0[order(res0$score, decreasing = TRUE),]
-	} else {
-		res0 = res0[order(res0$score, decreasing = FALSE),]
-	}
+	# if (db_name %in% decreasing) {
+	# 	res0 = res0[order(res0$score, decreasing = TRUE),]
+	# } else {
+	# 	res0 = res0[order(res0$score, decreasing = FALSE),]
+	# }
 
 	# print(head(res0))
 
@@ -129,9 +102,9 @@ all_auc$init = NULL
 all_pauc$init = NULL
 result_file = paste("resources/", db_name_list[1], "_", db_name_list[2], "_roc_results.txt", sep = "")
 sink(result_file)
-print(head(all_auc))
-print(head(all_pauc))
+print(all_auc)
+print(all_pauc)
 sink()
 
-print(head(all_auc))
-print(head(all_pauc))
+print(all_auc)
+print(all_pauc)
