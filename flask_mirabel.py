@@ -68,7 +68,7 @@ def create_mirabel():
 
             return redirect(url_for("aggregate_results", db_name = db_name, databases = databases))
 
-    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget", "Rna22"]
+    db_list = ["Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirdb", "Mirwalk", "Mbstar", "Exprtarget", "Rna22", "Mirdip"]
     return render_template("create_mirabel.html", db_list = db_list)
 
 @app.route('/aggregate_results/<db_name>/<databases>', methods=["GET", "POST"])
