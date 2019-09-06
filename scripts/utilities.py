@@ -192,13 +192,13 @@ def get_validated_interactions(config: dict):
     return result_dico
 
 def get_existing_mirabels():
-    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb, Mbstar, Exprtarget FROM ExistingMirabel;"
+    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb, Mbstar, Exprtarget, Rna22 FROM ExistingMirabel;"
     config = extract_config()
     connection = mysql_connection(config)
     cursor = connection.cursor()
     cursor.execute(query)
 
-    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb", "Mbstar", "Exprtarget"]
+    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb", "Mbstar", "Exprtarget", "Rna22"]
 
     result_dico = defaultdict(list)
     for row in cursor:
@@ -230,27 +230,23 @@ def create_mirabel_table(db_name: str):
     connection.close()
 
 def get_mirabel_metrics(db_name: str):
-    query = "SELECT * FROM {};".format(db_name)
+    query = "select COUNT(id{0}), COUNT(DISTINCT Mimat), COUNT(DISTINCT GeneID), (SELECT count(id{0}) FROM {0} WHERE Validated = '1') FROM {0};".format(db_name)
     config = extract_config()
     connection = mysql_connection(config)
     cursor = connection.cursor()
     cursor.execute(query)
-    rows = cursor.fetchall()
-    connection.close()
 
     interaction_number = 0
-    mimat_list = []
-    gene_list = []
+    mimat_count = 0
+    gene_count = 0
     validated_number = 0
-    for row in rows:
-        interaction_number += 1
-        mimat_list.append(row[1])
-        gene_list.append(row[2])
+    for row in cursor:
+        interaction_number = row[0] 
+        mimat_count = row[1]
+        gene_count = row[2]
+        validated_number = row[3]
 
-        if row[4] == '1':
-            validated_number += 1   
-
-    return interaction_number, len(list(set(mimat_list))), len(list(set(gene_list))), validated_number
+    return interaction_number, mimat_count, gene_count, validated_number
 
 def insert_to_existing_mirabels(db_name: str, databases: list):
     database_names = ", ".join(databases)
