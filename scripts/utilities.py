@@ -192,13 +192,13 @@ def get_validated_interactions(config: dict):
     return result_dico
 
 def get_existing_mirabels():
-    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb, Mbstar, Exprtarget, Rna22 FROM ExistingMirabel;"
+    query = "SELECT Name, Targetscan, Miranda, Pita, Svmicro, Comir, Mirmap, Mirwalk, Mirdb, Mbstar, Exprtarget, Rna22, Mirdip FROM ExistingMirabel;"
     config = extract_config()
     connection = mysql_connection(config)
     cursor = connection.cursor()
     cursor.execute(query)
 
-    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb", "Mbstar", "Exprtarget", "Rna22"]
+    name_list = ["Name", "Targetscan", "Miranda", "Pita", "Svmicro", "Comir", "Mirmap", "Mirwalk", "Mirdb", "Mbstar", "Exprtarget", "Rna22", "Mirdip"]
 
     result_dico = defaultdict(list)
     for row in cursor:
