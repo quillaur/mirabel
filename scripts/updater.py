@@ -12,6 +12,7 @@ import tarfile
 import lzma
 import sys
 import mysql.connector
+import csv
 
 # Personal imports
 from scripts import utilities
@@ -66,6 +67,13 @@ class Updater:
             self.urls = [self.config[self.db_name.upper()][url] for url in self.config[self.db_name.upper()] if "url" in url]
             self.filenames = [os.path.join(self.dir_name, url.split("/")[-1]) for url in self.urls]
 
+    def write_to_csv(self, filename: str, interactions: list):
+        # Write results temporary in CSV so as to be aggregated with R
+        with open(filename, "a") as my_csv:
+            csv_writer = csv.writer(my_csv, delimiter=";")
+            # csv_writer.writerow(["mirna_name", "gene_symbol", "gene_id", "score", "mimat"])
+            csv_writer.writerow(interactions)
+
     def parse_lines(self, file, mir_col: int, filename: str="", species: str = "hsa", decode: bool = True):
         """
         Parse line by line to format data before insertion.
@@ -85,6 +93,8 @@ class Updater:
             separator = " "
         else:
             separator = "\t"
+
+        filename = "missing_interactions.csv"
 
         for line in file:
             count += 1
@@ -147,7 +157,12 @@ class Updater:
                 elif "MIMAT" in mir_name:
                     to_insert_dict["Mimat"] = int(mir_name.replace("MIMAT", ""))
                 else:
+                    to_insert_dict["Mimat"] = "unknown"
+                    if not "gene_id" in to_insert_dict or not to_insert_dict["gene_id"]:
+                        to_insert_dict["gene_id"] = "unknown"
                     self.unknown_mirs.append(mir_name)
+                    interaction = [to_insert_dict["mirna_name"], to_insert_dict["gene_symbol"], to_insert_dict["gene_id"], to_insert_dict["score"], to_insert_dict["Mimat"]]
+                    self.write_to_csv(filename=filename, interactions=interaction)
                     continue
 
                 if not "gene_id" in to_insert_dict or not to_insert_dict["gene_id"] or not isinstance(to_insert_dict["gene_id"], int):
@@ -156,6 +171,9 @@ class Updater:
                     else:
                         self.unknown_genes.append(to_insert_dict["gene_symbol"])
                         # print("Issue with GS: {}".format(to_insert_dict))
+                        to_insert_dict["gene_id"] = "unknown"
+                        interaction = [to_insert_dict["mirna_name"], to_insert_dict["gene_symbol"], to_insert_dict["gene_id"], to_insert_dict["score"], to_insert_dict["Mimat"]]
+                        self.write_to_csv(filename=filename, interactions=interaction)
                         continue
 
                 # Get the label
@@ -377,6 +395,14 @@ class Updater:
                     "Score = VALUES(Score), " \
                     "Validated = VALUES(Validated), " \
                     "Localisation = VALUES(Localisation);".format(self.db_name)
+        elif "Rna22" in self.db_name:
+            query = "INSERT INTO {0} (Mimat, GeneID, Score, Validated) " \
+                    "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s) " \
+                    "ON DUPLICATE KEY UPDATE " \
+                    "Mimat = VALUES(Mimat), " \
+                    "GeneID = VALUES(GeneID), " \
+                    "Score = IF(VALUES(Score) < Score, VALUES(Score), Score), " \
+                    "Validated = VALUES(Validated);".format(self.db_name)
         else:
             query = "INSERT INTO {} (Mimat, GeneID, Score, Validated) " \
                     "VALUES (%(Mimat)s, %(gene_id)s, %(score)s, %(validated)s) " \

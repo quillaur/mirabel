@@ -31,12 +31,12 @@ for (file in ori_files_list)
 	{
 		tmp_files_list = c(tmp_files_list, file)
 
-		db_name = strsplit(file, "_tmp")[[1]][1]
-		db_name = strsplit(db_name, "_data/")[[1]][2]
-		if (!(db_name %in% db_name_list)) 
-		{
-			db_name_list = c(db_name_list, db_name)
-		}
+		# db_name = strsplit(file, "_tmp")[[1]][1]
+		# db_name = strsplit(db_name, "_data/")[[1]][2]
+		# if (!(db_name %in% db_name_list)) 
+		# {
+		# 	db_name_list = c(db_name_list, db_name)
+		# }
 	}
 }
 
@@ -55,6 +55,10 @@ db_number = 1
 for (file in tmp_files_list) {
 	db = strsplit(file, "/")[[1]][3]
 	db_name = gsub("_tmp_roc_data.txt","", db)
+	if (!(db_name %in% db_name_list)) 
+	{
+		db_name_list = c(db_name_list, db_name)
+	}
 	print(file)
 	res0 = read.table(file, header = TRUE, sep = ";")
 
