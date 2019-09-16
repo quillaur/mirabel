@@ -24,20 +24,16 @@ tmp_files_list = list.files("resources/tmp_roc_data/random_sets")
 # print(tmp_files_list)
 
 db_name_list = c()
-# I need miRabel to be the first element of the vector, so I loop twice through the loop.
-for (i in 1:2)
+for (file in tmp_files_list) 
 {
-	for (file in tmp_files_list) 
+	db_name = strsplit(file, "_tmp")[[1]][1]
+	# if (!(db_name %in% db_name_list) && grepl("main", db_name)) 
+	# {
+	# 	db_name_list = c(db_name_list, db_name)
+	# }
+	if (!(db_name %in% db_name_list))
 	{
-		db_name = strsplit(file, "_tmp")[[1]][1]
-		if (!(db_name %in% db_name_list) && grepl("Mirabel", db_name)) 
-		{
-			db_name_list = c(db_name_list, db_name)
-		}
-		else if (!(db_name %in% db_name_list) && length(db_name_list) > 0)
-		{
-			db_name_list = c(db_name_list, db_name)
-		}
+		db_name_list = c(db_name_list, db_name)
 	}
 }
 print(db_name_list)
@@ -127,6 +123,7 @@ compute_stats = function(all_auc)
 
 result_file = paste("resources/", db_name_list[1], "_", db_name_list[2], "_stats_results.txt", sep = "")
 sink(result_file)
+print(db_name_list)
 compute_stats(all_auc)
 # compute_stats(all_pauc)
 compute_stats(all_specif)

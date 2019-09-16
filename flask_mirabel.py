@@ -210,7 +210,12 @@ def performances_results(db_name, db_comp):
             handle = my_file.read()
             lines = handle.split("\n")
             for i, line in enumerate(lines):
-                if i == 1:
+                if i == 0:
+                    header = [x for x in line.split(" ") if x != ""]
+                    # Need to order properly results according to comparisons made
+                    ordered_indices = [header.index(db_name)]
+                    ordered_indices.extend(header.index(db) for db in db_comp)
+                elif i == 1:
                     elems = [x for x in line.split(" ") if x != ""]
                     del elems[0]
                     pr_auc = " // ".join(reordering_list(elems, ordered_indices))
@@ -265,7 +270,13 @@ def performances_results(db_name, db_comp):
             handle = my_file.read()
             lines = handle.split("\n")
             for i, line in enumerate(lines):
-                if "Mean" in line:
+                if i == 0:
+                    header = [x.replace('"', '') for x in line.split(" ") if x != ""]
+                    del header[0]
+                    # Need to order properly results according to comparisons made
+                    ordered_indices = [header.index(db_name)]
+                    ordered_indices.extend(header.index(db) for db in db_comp)
+                elif "Mean" in line:
                     line = line.replace('"', '')
                     elems = [item for item in line.split(" ") if item != ""]
                     del elems[:2]

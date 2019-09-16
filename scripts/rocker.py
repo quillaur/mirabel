@@ -121,6 +121,10 @@ class Rocker:
                 lol_interactions = self.compute_precision_recall(lol_interactions)
                 # Write results to file
                 filename = os.path.join(self.config["FILES"]["TMP_RANDOM_SETS"], "{}_tmp_random_set_{}.txt".format(db, sub))
+                # if db == self.db_main:
+                #     filename = os.path.join(self.config["FILES"]["TMP_RANDOM_SETS"], "{}_main_tmp_random_set_{}.txt".format(db, sub))
+                # else:
+                #     filename = os.path.join(self.config["FILES"]["TMP_RANDOM_SETS"], "{}_comp_tmp_random_set_{}.txt".format(db, sub))
                 self.write_tmp_roc_data_to_file(filename, lol_interactions)
                 filenames.append(filename)
 
@@ -214,9 +218,16 @@ class Rocker:
             return True
         else:
             # Get common mirnas between all aggregated DB
-            mirab_intrinsic_mirnas = utilities.get_common_intrinsic_mirnas(self.db_main)
             common_extrinsic_mirnas = utilities.get_common_mirnas(self.all_db)
-            common_mirnas = list(set(mirab_intrinsic_mirnas) & set(common_extrinsic_mirnas))
+            if "Mirabel" in self.db_main:
+                mirab_intrinsic_mirnas = utilities.get_common_intrinsic_mirnas(self.db_main)
+                common_mirnas = list(set(mirab_intrinsic_mirnas) & set(common_extrinsic_mirnas))
+            else:
+                common_mirnas = common_extrinsic_mirnas
+
+            print("{} common mirnas found".format(len(common_mirnas)))
+            print("Taking only the first 1k".format(len(common_mirnas)))
+            common_mirnas = common_mirnas[:1000]
 
             # Create a permanent directory to store this comparison
             perm_img_dir = os.path.join(self.config["FILES"]["PERM_IMAGES"], "{}_vs_{}".format(self.db_main, formated_comp_db))
@@ -275,6 +286,7 @@ class Rocker:
             # write results to file
             logging.info("Writing scores and labels for {}...".format(self.db_main))
             filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(self.db_main))
+            # filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_main_tmp_roc_data.txt".format(self.db_main))
             # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(self.db_main))
             self.write_tmp_roc_data_to_file(filename, lol_interactions)
             # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[self.db_main])
@@ -302,6 +314,7 @@ class Rocker:
                 # write results to file
                 logging.info("Writing scores and labels for {}...".format(db))
                 filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_tmp_roc_data.txt".format(db))
+                # filename = os.path.join(self.config["FILES"]["TMP_ROC_DATA"], "{}_comp_tmp_roc_data.txt".format(db))
                 # perm_filename = os.path.join(perm_data_dir, "{}_roc_data.txt".format(db))
                 self.write_tmp_roc_data_to_file(filename, lol_interactions)
                 # self.write_tmp_roc_data_to_file(perm_filename, reformated_scores_dict[db])
