@@ -1,8 +1,8 @@
-requests==2.21.0
-click==7.0
-configparser==3.7.4
-mysql-connector==2.1.6
-pandas==0.24.2
-progressbar2==3.39.3
-flask==1.0.2
+requests>=2.21.0
+click>=7.0
+configparser>=3.7.4
+mysql-connector-python>=2.1.6
+pandas>=0.24.2
+progressbar2>=3.39.3
+flask>=1.0.2
 mygene>=3.1.0
