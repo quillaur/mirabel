@@ -70,11 +70,13 @@ class Aggregator:
             predictions_list = utilities.get_predictions_for_mirna(self.config, db, mirna)
 
             if predictions_list:
-	            # Sort by score write results to file
-	            order = False if db in self.ascendant or "Mirabel" in db else True
-	            predictions_list = sorted(predictions_list, key=itemgetter(1), reverse=order)
-
-	            results_list_of_lists.append([elem[0] for elem in predictions_list])
+                # Sort by score write results to file
+                if db in self.ascendant or "Mirabel" in db:
+                    order = False 
+                else: 
+                    order = True 
+                predictions_list = sorted(predictions_list, key=itemgetter(1), reverse=order)
+                results_list_of_lists.append([elem[0] for elem in predictions_list])
 
         return results_list_of_lists
 

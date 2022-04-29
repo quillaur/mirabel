@@ -52,6 +52,20 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Create and load database
+Create a schema in your manager named mirabel.
+
+Then in your terminal (shell), create the database by running:
+```shell
+mysql -u root -p mirabel < sql_modif/db_tables.sql
+```
+
+**WARNING**: You will need a to download the following files before being able to run the programme:
+* MirDB: http://mirdb.org/download/miRDB_v6.0_prediction_result.txt.gz
+
+Once the files are downloaded, please indicate the path to the downloaded directory in the "SAVE FILE TO" key of the config file.
+
+
 ## Run the program
 If this is your first run:
 ```shell

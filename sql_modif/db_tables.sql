@@ -149,7 +149,9 @@ CREATE TABLE IF NOT EXISTS ExistingMirabel(
 	Mirdb ENUM("0", "1") DEFAULT "0",
 	Mirwalk ENUM("0", "1") DEFAULT "0",
 	Mbstar ENUM("0", "1") DEFAULT "0",
-	Exprtarget ENUM("0", "1") DEFAULT "0"
+	Exprtarget ENUM("0", "1") DEFAULT "0",
+	Rna22 ENUM("0", "1") DEFAULT "0",
+	Mirdip ENUM("0", "1") DEFAULT "0"
 );
 
 CREATE UNIQUE INDEX unique_Targetscan_mir_gene
